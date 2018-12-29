@@ -1,0 +1,46 @@
+{
+    "TRIBECA_MODE": "dev",
+    "EXCHANGE": "cryptokart",
+    "TradedPair": "BTC/USD",
+    "MongoDbUrl": "mongodb://localhost:27017/tribeca",
+    "WebClientUsername": "NULL",
+    "WebClientPassword": "NULL",
+    "WebClientListenPort": "3000",
+    "ShowAllOrders": "false",
+
+    "AuthorizationBearer": "6dMfggURMyg7vo09fKjwKhVpO6LbHWDxOsCapfqtW9PZN0VssDlhIntQHiT9h6IevKd5n0wANPCxP47FHLEWO82342CQ7ysjQD2nUN5s7ebVPKxqFClN4JW8sAjb4WJJOKfoLbGNiGihDV226SkrpBvGZ4SUgHG0NsL0KQqU4sTPy6ymP2LBkagkrAYGB1HgTaxnIUNI2UPqd2Y5cqTeqCYMKCZN2DnzBNqz1mfJX83kCjJGB9XLKg6jaegOh7e",
+    
+    "CryptokartPullUrl": "http://test.cryptokart.io:1337",
+    "CryptokartOrderEntryUrl": "wss://test.cryptokart.io:453",
+    "CryptokartMarketDataUrl": "wss://test.cryptokart.io:453",
+    "CryptokartSocketIoUrl": "https://api.hitbtc.com:8081",
+    "CryptokartApiKey": "7AC8OHL3XD",
+    "CryptokartSecret": "IUHIAxsBDQXomnFnOSaymoQlLwOKk0",
+    "CryptokartOrderDestination": "Cryptokart",
+
+    "HitBtcPullUrl": "http://api.hitbtc.com",
+    "HitBtcOrderEntryUrl": "wss://api.hitbtc.com:8080",
+    "HitBtcMarketDataUrl": "ws://api.hitbtc.com:80",
+    "HitBtcSocketIoUrl": "https://api.hitbtc.com:8081",
+    "HitBtcApiKey": "NULL",
+    "HitBtcSecret": "NULL",
+    "HitBtcOrderDestination": "HitBtc",
+    
+    "CoinbaseRestUrl": "https://api.gdax.com",
+    "CoinbaseWebsocketUrl": "wss://ws-feed.gdax.com",
+    "CoinbasePassphrase": "NULL",
+    "CoinbaseApiKey": "NULL",
+    "CoinbaseSecret": "NULL",
+    "CoinbaseOrderDestination": "Coinbase",
+    
+    "OkCoinWsUrl": "wss://real.okcoin.com:10440/websocket/okcoinapi",
+    "OkCoinHttpUrl": "https://www.okcoin.com/api/v1/",
+    "OkCoinApiKey": "NULL",
+    "OkCoinSecretKey": "NULL",
+    "OkCoinOrderDestination": "OkCoin",
+    
+    "BitfinexHttpUrl": "https://api.bitfinex.com/v1",
+    "BitfinexKey": "NULL",
+    "BitfinexSecret": "NULL",
+    "BitfinexOrderDestination": "Bitfinex"
+}

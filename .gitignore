@@ -1,0 +1,14 @@
+bower*
+Analysis
+.DS_Store
+node_modules
+typings
+*.js.map
+*.idea
+.baseDir.ts
+tribeca/
+*.log.*
+test/src
+.tscache
+tribeca.json
+.vscode
