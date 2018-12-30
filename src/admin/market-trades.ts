@@ -95,6 +95,7 @@ var MarketTradeGrid = ($scope: MarketTradeScope,
 
     var addNewMarketTrade = (u: Models.MarketTrade) => {
         if (u != null)
+            console.log("## market trade data : ", u);
             $scope.marketTrades.push(new MarketTradeViewModel(u));
     };
 

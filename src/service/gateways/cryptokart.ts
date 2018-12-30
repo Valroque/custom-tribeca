@@ -30,7 +30,7 @@ class ws {
     private readonly _authenticationBearer;
 
     constructor(onTrade?) {
-        this._authenticationBearer = 'lsiwul6aBFZA9wHFdPQ11CAGrcm0plZXwJoXzBh93APGBoQuha3dNuPkyVBJV6EMf7bGovJKk4f3jMPbQli4yfCT3OIsMr9xxqVXVrUx1P3gPEfMIvbYL0UqRV6yHDXlkQlQBPCdwB20kBQuZSHFGPHMhP6gtmtG8VprMkPrOE6s4uxcYtp6zFhDPCsYIhpmw5DXX7EFZ3daAuvAEV26sXL8jklN75d0vh0znK7WmwYBggAUSwno1IxAHs9IxEr';
+        this._authenticationBearer = 'aN2pbTmFm2yqlg6NynlDstromjlwqVS3mQneW2rfR0srS4Yre18FgDmShXmJ4lmVvN2EjAdMWZh6py9SgLsK9gQyah5JzzAMmxAq3GVdc3RGZoVTqPL8znNRKwuuSoIiferX6KnEd0GyuQ2ftQDLmx4vg4yXkwo1p14y850FvR7b9z38l8qhXv3YoliY4yRDKvrmoBsXuaEISL7AxZum7M4KOaDhKnWmYrI1RYj1DVVSKObgx98Kw4BT8A9sZIV';
 
         this.socket = new WebSocket("wss://test.cryptokart.io:453", {rejectUnauthorized: false});
 
@@ -78,7 +78,8 @@ class ws {
                             break;       
                 default:   switch(data.method) {
                                 case 'asset.update':    //updateAssetBalance(data);
-                                                        console.log("## asset.update data : ",data);
+                                                        console.log("## asset.update data ##");
+                                                        onTrade(data);
                                                         break;
                                 case 'deals.update':    //updateOrderDeals(data);
                                                         console.log("## deals.update data : ",data);
@@ -347,7 +348,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
 
     private updateDealData = (t) => {
-        console.log(t.params[1]);
+        console.log("*#*#*# deals data : ",t.params[1]);
         if (t.params && t.params.length) {
             t.params[1].forEach( trade => {
                 this.MarketTrade.trigger(new Models.GatewayMarketTrade(trade.price, trade.amount, trade.time, false, trade.type === 'buy' ? Models.Side.Ask : Models.Side.Bid));
@@ -953,7 +954,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
     private readonly _log = log("tribeca:gateway:cryptokart");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
 
-      private onTick = () => {
+    private onTick = () => {
         request(
             // this.getAuth("/matchengine/balance/query"),
             {
@@ -1000,8 +1001,29 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
             });
     };
 
+    private updatePositionData = (position) => {
+        let curr = Object.keys(position.params[0]);
+        
+        curr.forEach((cur) => {
+            let currency: Models.Currency;
+            try {
+                currency = Models.toCurrency(curr[0]);
+            }
+            catch(e) {
+                console.log(currency, e.message);
+                return;
+            }
+    
+            if(currency == null) return;
+            const positionData = new Models.CurrencyPosition(Number(position.params[0][cur].available), Number(position.params[0][cur].freeze), currency);
+            console.log('## position data from socket : ',positionData);
+            this.PositionUpdate.trigger(positionData);
+        })
+
+    }
+
     // ============================================= SOCKET TEST ===============================================//
-    private readonly _positionUpdateClient = new ws(); // needs the update function inside
+    private readonly _positionUpdateClient = new ws(this.updatePositionData); // needs the update function inside
 
     private readonly _apiKey : string;
     private readonly _secret : string;
@@ -1012,15 +1034,17 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
         this._secret = config.GetString("CryptokartSecret");
         this._pullUrl = config.GetString("CryptokartPullUrl");
         this._authorizationBearer = config.GetString("AuthorizationBearer");
+
+        // this function fetches the initial position status via a http call. the subsequent ones are fetched via a socket subscription.
         this.onTick();
-        setInterval(this.onTick, 15000);
+        //setInterval(this.onTick, 15000);
 
         // socket for the assets query
         this._positionUpdateClient.socket.customSend(JSON.stringify({
             id: 12021,
             method: 'asset.subscribe',
             params: [
-
+                'BTC','USDT'
             ]
         }))
     }
