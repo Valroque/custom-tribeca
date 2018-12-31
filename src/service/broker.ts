@@ -123,10 +123,26 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             source: order.source
         };
 
+        // previous way of sending an order. it clashed with the orderID generation of tribeca and cryptokart.
+        /**
+         * 1. generate submit new order data
+         * 2. add the orderID which was alphanumeric
+         * 3. use that orderID everywhere using the updateOrderState
+         * 4. send the post request to cryptokart exchange
+         */
         // this._oeGateway.sendOrder(this.updateOrderState(rpt)).then((data) => {
         //     console.log("## promise x : ",data);            
         // });
 
+        // new way of doing...
+        /**
+         * 1. generate submit new order data
+         * 2. generate the alphanumeric ID but the updateOrderState isn't called yet
+         * 3. send the post request to cryptokart exchange
+         * 4. get the orderID provided by our exchange
+         * 5. replace the alphanumeric ID by the one received via above steps
+         * 6. then do the updateOrderState
+         */
         return this._oeGateway.sendOrder(rpt)
         .then((data) => {
             console.log("## promise x : ",data); 

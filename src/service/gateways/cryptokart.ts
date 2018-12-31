@@ -776,6 +776,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         let finalOrderId : number;
 
+        // order ID is returned to be saved, updated by the tribeca for its internal use. It is used to replace the existing alphanumeric ID which tribeca uses ( which we can't work with )
         return this.sendPostRequest(url, finalOrderToSend)
         .then( (data: {error,result}) => {
             console.log('Order Sent:', data);
