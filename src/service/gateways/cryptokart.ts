@@ -736,6 +736,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     sendOrder = (order : Models.OrderStatusReport) => {
+
         const CryptokartOrder : CKOrder = {
             clientOrderId : order.orderId,
             market_name : this._symbolProvider.symbol,
@@ -748,14 +749,18 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         `https://test.cryptokart.io:1337/matchengine/order/putLimit` :
         `https://test.cryptokart.io:1337/matchengine/order/putMarket`
 
-        this.sendPostRequest(url, {
+        const finalOrderToSend = {
             "market_name" : this._symbolProvider.symbol,
             "side" : CryptokartOrderEntryGateway.getSide(order.side),
             "amount" : (order.quantity * _lotMultiplier).toString(),
-            "price" : (order.price).toString(),
-        })
+            "user_id" : '121',
+        }
+
+        console.log('## final order to send : ',finalOrderToSend)
+
+        this.sendPostRequest(url, finalOrderToSend)
         .then( data => {
-            console.log('Order Cancel:', data);
+            console.log('Order Sent:', data);
         })
         .catch( e => {
             this._log.error(e, "Error processing JSON response ", e);
