@@ -105,6 +105,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     }
 
     sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
+        console.log("## broker sendOrder : ", order);
         const orderId = this._oeGateway.generateClientOrderId();
 
         const rpt : Models.OrderStatusUpdate = {
@@ -122,12 +123,24 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             source: order.source
         };
 
-        this._oeGateway.sendOrder(this.updateOrderState(rpt));
+        // this._oeGateway.sendOrder(this.updateOrderState(rpt)).then((data) => {
+        //     console.log("## promise x : ",data);            
+        // });
 
-        return new Models.SentOrder(rpt.orderId);
+        return this._oeGateway.sendOrder(rpt)
+        .then((data) => {
+            console.log("## promise x : ",data); 
+            rpt.orderId = data.toString();
+            this.updateOrderState(rpt);
+        })
+        .then(() => {
+            return new Models.SentOrder(rpt.orderId);
+        })
+   
     };
 
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
+
         const rpt = this._orderCache.allOrders.get(replace.origOrderId);
 
         if (!rpt) {
@@ -148,6 +161,8 @@ export class OrderBroker implements Interfaces.IOrderBroker {
     };
 
     cancelOrder = (cancel : Models.OrderCancel) => {
+
+        console.log("## broker cancelOrder : ",cancel);
         const rpt = this._orderCache.allOrders.get(cancel.origOrderId);
 
         if (!this._oeGateway.cancelsByClientOrderId) {

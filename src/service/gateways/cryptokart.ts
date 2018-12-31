@@ -30,7 +30,7 @@ class ws {
     private readonly _authenticationBearer;
 
     constructor(onTrade?) {
-        this._authenticationBearer = 'OaXRhb3cD0O6GrUK5dGVqiKAAprZPnhP65Qcn7DjYVc2Q9u0mFeYuxzEjG8EwWZMaYXrZwlsUJ7RModEq7ifHsPBzmEFE2k1tw251E5LeasQch3816XHErY4ZbqwbB0fg7SyoaApAbab8Tu5jSEazrEoC77Vfge1agDsXSDp13oP5qsB28xyHVpMcBoiTcefLksrsckHFICqnWeqto1QuLkJfnUV3YgadJxv1EzKX2nVpo8IibJFjFRQD4X5PNZ';
+        this._authenticationBearer = 'tWBjy2gt90JijTDjzEMCsMRJ9qYZsWdUqKa02tufvjSzG7a7m3vfl5ZnyxZ10SWxvt85O6Rqem5n5tHCyJ2fHTxRFEIXlxHEaPqNX0WCXmbuWVUu5shEvJu63sV2nBJgcNsjVdpvig0WkS1O0yQy1bKH7gfW0yoFbrnFm2x10blq9aExA4AvrZKsQ9ucJvM5YCIcOQxs40rxEMUGdhHQkb0X1AfW8Rt9WrIThkb36wRFugJE3P9hDQapbmTqckm';
 
         this.socket = new WebSocket("wss://test.cryptokart.io:453", {rejectUnauthorized: false});
 
@@ -718,9 +718,10 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     _nonce = 1;
 
     cancelOrder = (cancel : Models.OrderStatusReport) => {
+        console.log("## testing cancel order : ", cancel);
         this.sendPostRequest('https://test.cryptokart.io:1337/matchengine/order/cancel', {
             "market_name" : this._symbolProvider.symbol,
-            "order_id" : cancel.orderId
+            "order_id" : parseInt(cancel.orderId)
         })
         .then( data => {
             console.log('Order Cancel:', data);
@@ -735,7 +736,9 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return this.sendOrder(replace);
     };
 
-    sendOrder = (order : Models.OrderStatusReport) => {
+    sendOrder = (order : Models.OrderStatusUpdate) => {
+
+        console.log("## testing sendOrder : ", order)
 
         const CryptokartOrder : CKOrder = {
             clientOrderId : order.orderId,
@@ -745,22 +748,39 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             price: order.price.toString()
         };
 
-        let url = CryptokartOrderEntryGateway.getType(order.type) === 'limit' ?
-        `https://test.cryptokart.io:1337/matchengine/order/putLimit` :
-        `https://test.cryptokart.io:1337/matchengine/order/putMarket`
+        let url: string;
 
-        const finalOrderToSend = {
-            "market_name" : this._symbolProvider.symbol,
-            "side" : CryptokartOrderEntryGateway.getSide(order.side),
-            "amount" : (order.quantity * _lotMultiplier).toString(),
-            "user_id" : '121',
+        let finalOrderToSend = {};
+
+        if(CryptokartOrderEntryGateway.getType(order.type) === 'limit') {
+
+            url = `https://test.cryptokart.io:1337/matchengine/order/putLimit`;
+            finalOrderToSend = {
+                "market_name" : this._symbolProvider.symbol,
+                "side" : CryptokartOrderEntryGateway.getSide(order.side),
+                "amount" : (order.quantity * _lotMultiplier).toString(),
+                "price" : (order.price).toString(),
+            }
+        } else {
+
+            url = `https://test.cryptokart.io:1337/matchengine/order/putMarket`;            
+            finalOrderToSend = {
+                "market_name" : this._symbolProvider.symbol,
+                "side" : CryptokartOrderEntryGateway.getSide(order.side),
+                "amount" : (order.quantity * _lotMultiplier).toString(),
+                "user_id" : '121', // check for the user ID
+            }
         }
 
         console.log('## final order to send : ',finalOrderToSend)
 
-        this.sendPostRequest(url, finalOrderToSend)
-        .then( data => {
+        let finalOrderId : number;
+
+        return this.sendPostRequest(url, finalOrderToSend)
+        .then( (data: {error,result}) => {
             console.log('Order Sent:', data);
+            finalOrderId =  (data.result.id);
+            return finalOrderId;
         })
         .catch( e => {
             this._log.error(e, "Error processing JSON response ", e);
@@ -1043,6 +1063,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
         // this function fetches the initial position status via a http call. the subsequent ones are fetched via a socket subscription.
         this.onTick();
         //setInterval(this.onTick, 15000);
+        setTimeout(this.onTick, 15000);
 
         // socket for the assets query
         this._positionUpdateClient.socket.customSend(JSON.stringify({

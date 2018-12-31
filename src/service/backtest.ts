@@ -118,6 +118,8 @@ export class BacktestGateway implements Interfaces.IPositionGateway, Interfaces.
     };
 
     cancelOrder = (cancel : Models.OrderStatusReport) => {
+
+        console.log("$$$ this is when it is called...");
         this.timeProvider.setTimeout(() => {
             if (cancel.side === Models.Side.Bid) {
                 var existing = this._openBidOrders[cancel.orderId];
