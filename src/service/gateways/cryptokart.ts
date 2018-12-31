@@ -30,7 +30,7 @@ class ws {
     private readonly _authenticationBearer;
 
     constructor(onTrade?) {
-        this._authenticationBearer = 'aN2pbTmFm2yqlg6NynlDstromjlwqVS3mQneW2rfR0srS4Yre18FgDmShXmJ4lmVvN2EjAdMWZh6py9SgLsK9gQyah5JzzAMmxAq3GVdc3RGZoVTqPL8znNRKwuuSoIiferX6KnEd0GyuQ2ftQDLmx4vg4yXkwo1p14y850FvR7b9z38l8qhXv3YoliY4yRDKvrmoBsXuaEISL7AxZum7M4KOaDhKnWmYrI1RYj1DVVSKObgx98Kw4BT8A9sZIV';
+        this._authenticationBearer = 'OaXRhb3cD0O6GrUK5dGVqiKAAprZPnhP65Qcn7DjYVc2Q9u0mFeYuxzEjG8EwWZMaYXrZwlsUJ7RModEq7ifHsPBzmEFE2k1tw251E5LeasQch3816XHErY4ZbqwbB0fg7SyoaApAbab8Tu5jSEazrEoC77Vfge1agDsXSDp13oP5qsB28xyHVpMcBoiTcefLksrsckHFICqnWeqto1QuLkJfnUV3YgadJxv1EzKX2nVpo8IibJFjFRQD4X5PNZ';
 
         this.socket = new WebSocket("wss://test.cryptokart.io:453", {rejectUnauthorized: false});
 
@@ -73,20 +73,20 @@ class ws {
                 case 1063:  console.log("## Unscubscribe: Market Order Depth", data);
                             break; 
                 // positions update case
-                case 12021: console.log("## Positions Updated", data);
+                case 12021: console.log("## Subscribe: Positions Data", data);
                             //onTrade(data);
                             break;       
                 default:   switch(data.method) {
                                 case 'asset.update':    //updateAssetBalance(data);
-                                                        console.log("## asset.update data ##");
+                                                        console.log("## asset.update data received ##");
                                                         onTrade(data);
                                                         break;
                                 case 'deals.update':    //updateOrderDeals(data);
-                                                        console.log("## deals.update data : ",data);
+                                                        console.log("## deals.update data received ## ");
                                                         onTrade(data);
                                                         break;
                                 case 'depth.update':    //onTrade(data);
-                                                        console.log("## depth.update data : ",data);
+                                                        console.log("## depth.update data received ##");
                                                         onTrade(data);
                                                         break;
                                 default:                console.log('what omg', data, typeof data, data.id);
@@ -348,7 +348,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
 
     private updateDealData = (t) => {
-        console.log("*#*#*# deals data : ",t.params[1]);
+        console.log("\n## deals data : \n",t.params[1]);
         if (t.params && t.params.length) {
             t.params[1].forEach( trade => {
                 this.MarketTrade.trigger(new Models.GatewayMarketTrade(trade.price, trade.amount, trade.time, false, trade.type === 'buy' ? Models.Side.Ask : Models.Side.Bid));
@@ -360,7 +360,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
     private asksArray : Models.MarketSide[] = [];
 
     private updateDepthData = (t) => {
-        console.log('## t.params[1] : ', t.params[1]);
+        console.log('\n## depth data : \n', t.params[1]);
 
         if(t.params[0]) {
 
@@ -379,7 +379,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
                 })
             }
     
-            console.log('Whole Order Book : ', this.bidsArray, this.asksArray);
+            console.log('\n## Whole Order Book Built : \n', this.bidsArray, this.asksArray);
             this.MarketData.trigger(new Models.Market(this.bidsArray, this.asksArray, new Date()));
 
         } else {
@@ -452,7 +452,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
                 })
             }
 
-            console.log('Updated Order Book : ', this.bidsArray, this.asksArray);
+            console.log('\n## Partial Order Book Built : \n', this.bidsArray, this.asksArray);
             this.MarketData.trigger(new Models.Market(this.bidsArray, this.asksArray, new Date()));
         }
         // console.log(this.MarketData);
@@ -976,7 +976,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
 
                     rpts = rpts.result;
 
-                    //console.log("## rpts : ",rpts);
+                    console.log("## Whole Positions Data - Received Once via API : ",rpts);
 
                     let assets = Object.keys(rpts);
 
@@ -1016,7 +1016,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
     
             if(currency == null) return;
             const positionData = new Models.CurrencyPosition(Number(position.params[0][cur].available), Number(position.params[0][cur].freeze), currency);
-            console.log('## position data from socket : ',positionData);
+            console.log('## position data from socket : ',positionData, cur);
             this.PositionUpdate.trigger(positionData);
         })
 
