@@ -106,7 +106,6 @@ export class DisplayPair {
         fireFactory: Shared.FireFactory) {
 
         const setStatus = () => {
-            console.log("## this.connectedToExchange setStatus : ", this.connectedToExchange);
             this.connected = (this.connectedToExchange && this.connectedToServer);
             console.log("connection status changed: ", this.connected, "connectedToExchange", 
                 this.connectedToExchange, "connectedToServer", this.connectedToServer);
