@@ -8,7 +8,7 @@ import * as Q from "q";
 
 require('events').EventEmitter.prototype._maxListeners = 100;
 
-const _authorizationBearer: string = 'tWBjy2gt90JijTDjzEMCsMRJ9qYZsWdUqKa02tufvjSzG7a7m3vfl5ZnyxZ10SWxvt85O6Rqem5n5tHCyJ2fHTxRFEIXlxHEaPqNX0WCXmbuWVUu5shEvJu63sV2nBJgcNsjVdpvig0WkS1O0yQy1bKH7gfW0yoFbrnFm2x10blq9aExA4AvrZKsQ9ucJvM5YCIcOQxs40rxEMUGdhHQkb0X1AfW8Rt9WrIThkb36wRFugJE3P9hDQapbmTqckm';
+const _authorizationBearer: string = 'H5gxdbHSeYpWCcF44chTHzviU7DMQN6yRlHjKR3zL9z8HxdNG67Vnz68RFP3TLi2P3OQmaCvSrzvqHhswAnJing9kKMOYMfujhLMMYtGCjxQXGcQSCMNGASMXLdZIjjLNoZn9At3O8AZUcWV42E9vH9zxqFGHVloexhYnOTcLh0bvOmwzAcunqcBxwtgrqu3MTaLzuGBYhghJMcjkVR5o3ZLBJDLLgDd9NsPEwROAkDhu4GXZwAXcNyUjBzTaiZ';
 
 export const date = () => new Date();
 

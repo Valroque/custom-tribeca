@@ -30,7 +30,7 @@ class ws {
     private readonly _authenticationBearer;
 
     constructor(onTrade?) {
-        this._authenticationBearer = 'tWBjy2gt90JijTDjzEMCsMRJ9qYZsWdUqKa02tufvjSzG7a7m3vfl5ZnyxZ10SWxvt85O6Rqem5n5tHCyJ2fHTxRFEIXlxHEaPqNX0WCXmbuWVUu5shEvJu63sV2nBJgcNsjVdpvig0WkS1O0yQy1bKH7gfW0yoFbrnFm2x10blq9aExA4AvrZKsQ9ucJvM5YCIcOQxs40rxEMUGdhHQkb0X1AfW8Rt9WrIThkb36wRFugJE3P9hDQapbmTqckm';
+        this._authenticationBearer = 'H5gxdbHSeYpWCcF44chTHzviU7DMQN6yRlHjKR3zL9z8HxdNG67Vnz68RFP3TLi2P3OQmaCvSrzvqHhswAnJing9kKMOYMfujhLMMYtGCjxQXGcQSCMNGASMXLdZIjjLNoZn9At3O8AZUcWV42E9vH9zxqFGHVloexhYnOTcLh0bvOmwzAcunqcBxwtgrqu3MTaLzuGBYhghJMcjkVR5o3ZLBJDLLgDd9NsPEwROAkDhu4GXZwAXcNyUjBzTaiZ';
 
         this.socket = new WebSocket("wss://test.cryptokart.io:453", {rejectUnauthorized: false});
 
@@ -354,6 +354,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
                 this.MarketTrade.trigger(new Models.GatewayMarketTrade(trade.price, trade.amount, trade.time, false, trade.type === 'buy' ? Models.Side.Ask : Models.Side.Bid));
             })
         }
+        this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
     };
 
     private bidsArray : Models.MarketSide[] = [];
@@ -454,6 +455,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
 
             console.log('\n## Partial Order Book Built : \n', this.bidsArray, this.asksArray);
             this.MarketData.trigger(new Models.Market(this.bidsArray, this.asksArray, new Date()));
+            this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         }
         // console.log(this.MarketData);
     }
@@ -480,11 +482,11 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
     // };
 
     private readonly _tradesClient = new ws(this.updateDealData);
-    private _hasProcessedSnapshot = false;
+    // private _hasProcessedSnapshot = false;
     private readonly _marketDataWs = new ws(this.updateDepthData);
 
-    private readonly _lastBids = new SideMarketData(Models.Side.Bid);
-    private readonly _lastAsks = new SideMarketData(Models.Side.Ask);
+    // private readonly _lastBids = new SideMarketData(Models.Side.Bid);
+    // private readonly _lastAsks = new SideMarketData(Models.Side.Ask);
     // private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Date) => {
     //     if (msg.symbol !== this._symbolProvider.symbol || !this._hasProcessedSnapshot) return;
     //     this.onMarketDataUpdate(msg.bid, msg.ask, t);
@@ -1046,10 +1048,14 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
             this.PositionUpdate.trigger(positionData);
         })
 
+        this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
+
     }
 
     // ============================================= SOCKET TEST ===============================================//
     private readonly _positionUpdateClient = new ws(this.updatePositionData); // needs the update function inside
+    ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+    
 
     private readonly _apiKey : string;
     private readonly _secret : string;
@@ -1062,7 +1068,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
         this._authorizationBearer = config.GetString("AuthorizationBearer");
 
         // this function fetches the initial position status via a http call. the subsequent ones are fetched via a socket subscription.
-        this.onTick();
+        //this.onTick();
         //setInterval(this.onTick, 15000);
         setTimeout(this.onTick, 15000);
 
