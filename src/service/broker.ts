@@ -544,19 +544,23 @@ export class ExchangeBroker implements Interfaces.IBroker {
         return this._connectStatus;
     }
 
+
     constructor(private _pair : Models.CurrencyPair,
                 private _mdGateway : Interfaces.IMarketDataGateway,
                 private _baseGateway : Interfaces.IExchangeDetailsGateway,
                 private _oeGateway : Interfaces.IOrderEntryGateway,
                 private _connectivityPublisher : Messaging.IPublish<Models.ConnectivityStatus>) {
         this._mdGateway.ConnectChanged.on(s => {
+            console.log("** s _mdGateway : ",s);
             this.onConnect(Models.GatewayType.MarketData, s);
         });
 
         this._oeGateway.ConnectChanged.on(s => {
+            console.log("** s _oeGateway : ",s);
             this.onConnect(Models.GatewayType.OrderEntry, s)
         });
 
         this._connectivityPublisher.registerSnapshot(() => [this.connectStatus]);
+
     }
 }

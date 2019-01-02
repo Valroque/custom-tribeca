@@ -30,7 +30,7 @@ class ws {
     private readonly _authenticationBearer;
 
     constructor(onTrade?) {
-        this._authenticationBearer = 'H5gxdbHSeYpWCcF44chTHzviU7DMQN6yRlHjKR3zL9z8HxdNG67Vnz68RFP3TLi2P3OQmaCvSrzvqHhswAnJing9kKMOYMfujhLMMYtGCjxQXGcQSCMNGASMXLdZIjjLNoZn9At3O8AZUcWV42E9vH9zxqFGHVloexhYnOTcLh0bvOmwzAcunqcBxwtgrqu3MTaLzuGBYhghJMcjkVR5o3ZLBJDLLgDd9NsPEwROAkDhu4GXZwAXcNyUjBzTaiZ';
+        this._authenticationBearer = 'bSKU0IAsbss28wIi8XAwQu90NLp4NmQk0KH8omZITVnwVycEhy9NW8fcygCbR9NOUpYpbEhpfF6h2NJStC1g4F5vxR9wmqjpnLlu8UgAPRxm8FsY0UQp2OcVgbpbfUIFNbux30xRlQl9b3xuRvxfG2egz6AuNwXkMT4Su0ET6gOOeCZcpCqwM48cW9EdeIOZPz7oMSakR4PsNDvu5qPyZlHJeZUeTno3WjUJ7ekxhMZmvjvofNNuWk9pyfgAC9s';
 
         this.socket = new WebSocket("wss://test.cryptokart.io:453", {rejectUnauthorized: false});
 
@@ -720,6 +720,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     _nonce = 1;
 
     cancelOrder = (cancel : Models.OrderStatusReport) => {
+
         console.log("## testing cancel order : ", cancel);
         this.sendPostRequest('https://test.cryptokart.io:1337/matchengine/order/cancel', {
             "market_name" : this._symbolProvider.symbol,
@@ -727,6 +728,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         })
         .then( data => {
             console.log('Order Cancel:', data);
+            this.changeConnectionStatus(Models.ConnectivityStatus.Connected);
         })
         .catch( e => {
             this._log.error(e, "Error processing JSON response ", e);
@@ -783,6 +785,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         .then( (data: {error,result}) => {
             console.log('Order Sent:', data);
             finalOrderId =  (data.result.id);
+            this.changeConnectionStatus(Models.ConnectivityStatus.Connected);
             return finalOrderId;
         })
         .catch( e => {
@@ -911,6 +914,10 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     // };
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
+
+    private changeConnectionStatus = (c : Models.ConnectivityStatus) => {
+        this.ConnectChanged.trigger(c)
+    }
     // this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
     // private onConnectionStatusChange = () => {
     //     console.log("==========  ", this._orderEntryWs.isConnected, "  ================");
@@ -961,8 +968,12 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     constructor(config : Config.IConfigProvider, private _symbolProvider: CryptokartSymbolProvider, private _details: CryptokartBaseGateway) {
         this._apiKey = config.GetString("HitBtcApiKey");
         this._secret = config.GetString("HitBtcSecret");
-        this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         this._authorizationBearer = config.GetString("AuthorizationBearer");
+
+        setTimeout(() => {
+            this.changeConnectionStatus(Models.ConnectivityStatus.Connected)
+        },7000);
+
         // this._orderEntryWs = new WebSocket(config.GetString("HitBtcOrderEntryUrl"), 5000, 
         //     this.onMessage, 
         //     this.onOpen, 
@@ -1027,6 +1038,8 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                     this._log.error(e, "Error processing JSON response ", resp);
                 }
             });
+
+            this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
     };
 
     private updatePositionData = (position) => {
@@ -1070,7 +1083,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
         // this function fetches the initial position status via a http call. the subsequent ones are fetched via a socket subscription.
         //this.onTick();
         //setInterval(this.onTick, 15000);
-        setTimeout(this.onTick, 15000);
+        setTimeout(this.onTick, 10000);
 
         // socket for the assets query
         this._positionUpdateClient.socket.customSend(JSON.stringify({

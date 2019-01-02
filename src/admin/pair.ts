@@ -122,7 +122,7 @@ export class DisplayPair {
         }
 
         const setExchangeStatus = (cs: Models.ConnectivityStatus) => {
-            this.connectedToExchange = !(cs == Models.ConnectivityStatus.Connected); // previously : "(cs == Models.ConnectivityStatus.Connected)"
+            this.connectedToExchange = (cs == Models.ConnectivityStatus.Connected); // previously : "(cs == Models.ConnectivityStatus.Connected)"
             setStatus();
         };
 
