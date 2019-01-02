@@ -25,6 +25,7 @@ export class Quoter {
     }
 
     public updateQuote = (q: Models.Timestamped<Models.Quote>, side: Models.Side): Models.QuoteSent => {
+        console.log("\n## quoter.ts updateQuote is called");
         switch (side) {
             case Models.Side.Ask:
                 return this._askQuoter.updateQuote(q);
@@ -43,6 +44,7 @@ export class Quoter {
     };
 
     public quotesSent = (s: Models.Side) => {
+        console.log("## quoter.ts quotesSent is called");
         switch (s) {
             case Models.Side.Ask:
                 return this._askQuoter.quotesSent;
@@ -67,6 +69,7 @@ export class ExchangeQuoter {
     }
 
     private handleOrderUpdate = (o: Models.OrderStatusReport) => {
+        console.log("\n## quoter.ts handleOrderUpdate is called");
         switch (o.orderStatus) {
             case Models.OrderStatus.Cancelled:
             case Models.OrderStatus.Complete:
@@ -81,6 +84,7 @@ export class ExchangeQuoter {
     };
 
     public updateQuote = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
+        console.log("\n## quoter.ts updateQuote is called");
         if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
             return Models.QuoteSent.UnableToSend;
 
@@ -104,10 +108,12 @@ export class ExchangeQuoter {
     };
 
     private start = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
+        console.log("\n## quoter.ts start is called");
         const existing = this._activeQuote;
 
         const newOrder = new Models.SubmitNewOrder(this._side, q.data.size, Models.OrderType.Limit,
             q.data.price, Models.TimeInForce.GTC, this._exchange, q.time, true, Models.OrderSource.Quote);
+
         const sent = this._broker.sendOrder(newOrder);
 
         const quoteOrder = new QuoteOrder(q.data, sent.sentOrderClientId);

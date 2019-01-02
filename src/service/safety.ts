@@ -46,13 +46,15 @@ export class SafetyCalculator {
         _publisher.registerSnapshot(() => [this.latest]);
         _repo.NewParameters.on(_ => this.computeQtyLimit());
         _qlParams.NewParameters.on(_ => this.computeQtyLimit());
-        _broker.Trade.on(this.onTrade);
+        _broker.Trade.on(this.onTrade); // when is this called?
         
-        _timeProvider.setInterval(this.computeQtyLimit, moment.duration(1, "seconds"));
+        _timeProvider.setInterval(this.computeQtyLimit, moment.duration(10, "seconds"));
     }
 
     private onTrade = (ut: Models.Trade) => {
         var u = _.cloneDeep(ut);
+
+        console.log("## safety.ts onTrade u : ",u);
         if (this.isOlderThan(u, this._repo.latest)) return;
 
         if (u.side === Models.Side.Ask) {
@@ -96,6 +98,8 @@ export class SafetyCalculator {
         if (buyPq) buyPing /= buyPq;
         if (sellPq) sellPong /= sellPq;
 
+        console.log("\n## safety.ts computeQtyLimit this._buys, this._sells : ",this._buys, this._sells);
+
         var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[]=> {
             return _.chain(input)
                 .filter(o => !this.isOlderThan(o, settings))
@@ -105,6 +109,8 @@ export class SafetyCalculator {
 
         this._buys = orderTrades(this._buys, -1);
         this._sells = orderTrades(this._sells, 1);
+
+
 
         // don't count good trades against safety
         while (_.size(this._buys) > 0 && _.size(this._sells) > 0) {
@@ -126,9 +132,13 @@ export class SafetyCalculator {
             }
         }
 
+        console.log("\n## safety.ts computeQtyLimit this._buys, this._sells : ",this._buys, this._sells);
+
         var computeSafety = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
 
         this.latest = new Models.TradeSafety(computeSafety(this._buys), computeSafety(this._sells),
             computeSafety(this._buys.concat(this._sells)), buyPing, sellPong, this._timeProvider.utcNow());
+
+        console.log("\n## safety.ts computeQtyLimit this.latest : ", this.latest);
     };
 }

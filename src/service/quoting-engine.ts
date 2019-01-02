@@ -159,11 +159,14 @@ export class QuotingEngine {
             unrounded.bidSz = Math.max(minTick, unrounded.bidSz);
         }
 
+        console.log("## quoting-engine.ts computeQuote : ", unrounded);
         return unrounded;
     }
 
     private recalcQuote = (t: Date) => {
         const fv = this._fvEngine.latestFairValue;
+
+        console.log("## quoting-engine.ts recalcQuote : fv : ",fv);
         if (fv == null) {
             this.latestQuote = null;
             return;
@@ -187,6 +190,8 @@ export class QuotingEngine {
             this.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, Models.Side.Ask),
             t
             );
+
+        console.log("## quoting-engine.ts recalcQuote : latestQuote : ",this.latestQuote);
     };
 
     private quotesAreSame(

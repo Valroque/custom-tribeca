@@ -267,8 +267,7 @@ const runTradingSystem = async (classes: SimulationClasses) : Promise<void> => {
     const shouldPublishAllOrders = !config.Has("ShowAllOrders") || config.GetBoolean("ShowAllOrders");
     const ordersFilter = shouldPublishAllOrders ? {} : {source: {$gte: Models.OrderSource.OrderTicket}};
 
-    const [
-        initOrders, initTrades, initMktTrades, initMsgs, initParams, initActive, initRfv] = await Promise.all([
+    const [initOrders, initTrades, initMktTrades, initMsgs, initParams, initActive, initRfv] = await Promise.all([
         orderPersister.loadAll(10000, ordersFilter),
         tradesPersister.loadAll(10000),
         mktTradePersister.loadAll(100),
@@ -326,8 +325,7 @@ const runTradingSystem = async (classes: SimulationClasses) : Promise<void> => {
         hasSelfTradePrevention: broker.hasSelfTradePrevention,
     }, "using the following exchange details");
 
-    const orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher,
-        tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, messages, orderCache, initOrders, initTrades, shouldPublishAllOrders);
+    const orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher, tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, messages, orderCache, initOrders, initTrades, shouldPublishAllOrders);
     const marketDataBroker = new Broker.MarketDataBroker(timeProvider, gateway.md, marketDataPublisher, marketDataPersister, messages);
     const positionBroker = new Broker.PositionBroker(timeProvider, broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
 

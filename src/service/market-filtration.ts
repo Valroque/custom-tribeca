@@ -43,6 +43,8 @@ export class MarketFiltration {
         var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
 
         this.latestFilteredMarket = new Models.Market(bid, ask, mkt.time);
+
+        console.log("\n## market-filteration.ts filterFullMarket : ",this.latestFilteredMarket);
     };
 
     private filterMarket = (mkts: Models.MarketSide[], s: Models.Side): Models.MarketSide[]=> {
@@ -65,6 +67,7 @@ export class MarketFiltration {
             }
         }
 
+        console.log("\n## market-filteration.ts filterMarket : ",copiedMkts.filter(m => m.size > 0.001));
         return copiedMkts.filter(m => m.size > 0.001);
     };
 }

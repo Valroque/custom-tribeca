@@ -93,6 +93,8 @@ export class QuoteSender {
             }
         }
         
+        console.log("\n## quote-sender.ts sendQuote : askStatus : ",askStatus);
+        console.log("\n## quote-sender.ts sendQuote : bidStatus : ",bidStatus);
         var askAction: Models.QuoteSent;
         if (askStatus === Models.QuoteStatus.Live) {
             askAction = this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);
@@ -110,10 +112,13 @@ export class QuoteSender {
         }
 
         this.latestStatus = new Models.TwoSidedQuoteStatus(bidStatus, askStatus);
+
+        console.log("## quote-sender.ts sendQuote : latestStatus : ",this.latestStatus);
     };
 
     private hasEnoughPosition = (cur: Models.Currency, minAmt: number): boolean => {
         var pos = this._positionBroker.getPosition(cur);
+        console.log("## quote-sender.ts hasEnoughPosition : ",pos != null && pos.amount > minAmt);
         return pos != null && pos.amount > minAmt;
     };
 }
