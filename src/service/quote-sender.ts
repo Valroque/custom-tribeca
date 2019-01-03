@@ -75,11 +75,15 @@ export class QuoteSender {
         return false;
     };
 
-    private sendQuote = (t: Date): void => {
+    private sendQuote = async (t: Date) => {
         var quote = this._quotingEngine.latestQuote;
 
         var askStatus = Models.QuoteStatus.Held;
         var bidStatus = Models.QuoteStatus.Held;
+
+        console.log("\n quote-senter.ts sendQuote : quote : ",quote);
+        console.log("## quote-sender.ts sendQuote : this._activeRepo.latest : ",this._activeRepo.latest);
+        console.log("## quote-sender.ts sendQuote : this._activeRepo : ",this._activeRepo);
 
         if (quote !== null && this._activeRepo.latest) {
             if (quote.ask !== null && this.hasEnoughPosition(this._details.pair.base, quote.ask.size) &&
@@ -93,11 +97,11 @@ export class QuoteSender {
             }
         }
         
-        console.log("\n## quote-sender.ts sendQuote : askStatus : ",askStatus);
-        console.log("\n## quote-sender.ts sendQuote : bidStatus : ",bidStatus);
+        //console.log("\n## quote-sender.ts sendQuote : askStatus : ",askStatus);
+        //console.log("\n## quote-sender.ts sendQuote : bidStatus : ",bidStatus);
         var askAction: Models.QuoteSent;
         if (askStatus === Models.QuoteStatus.Live) {
-            askAction = this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);
+            askAction = await this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);
         }
         else {
             askAction = this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Ask, t));
@@ -105,7 +109,7 @@ export class QuoteSender {
 
         var bidAction: Models.QuoteSent;
         if (bidStatus === Models.QuoteStatus.Live) {
-            bidAction = this._quoter.updateQuote(new Models.Timestamped(quote.bid, t), Models.Side.Bid);
+            bidAction = await this._quoter.updateQuote(new Models.Timestamped(quote.bid, t), Models.Side.Bid);
         }
         else {
             bidAction = this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Bid, t));

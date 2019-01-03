@@ -335,6 +335,7 @@ const runTradingSystem = async (classes: SimulationClasses) : Promise<void> => {
     const safetyCalculator = new Safety.SafetyCalculator(timeProvider, paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
 
     const startQuoting = (moment(timeProvider.utcNow()).diff(moment(initActive.time), 'minutes') < 3 && initActive.active);
+    console.log("## main.ts : startQuoting : ",startQuoting);
     const active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
 
     const quoter = new Quoter.Quoter(orderBroker, broker);

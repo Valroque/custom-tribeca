@@ -31,15 +31,26 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
         private _exchangeConnectivity: Interfaces.IBrokerConnectivity,
         private _pub: Messaging.IPublish<boolean>,
         private _rec: Messaging.IReceive<boolean>) {
+        console.log("Starting saved quoting state: ", startQuoting);
         this._log.info("Starting saved quoting state: ", startQuoting);
         this._savedQuotingMode = startQuoting;
 
         _pub.registerSnapshot(() => [this.latest]);
+
+        // receiver is registered and the handler is called whenever data is received...
         _rec.registerReceiver(this.handleNewQuotingModeChangeRequest);
+
+        // therefore, i triggered the function on my own with the boolean value as expected...
+        setTimeout(() => {
+            console.log("\n## Calling this.handleNewQuotingModeChangeRequest ... ");
+            this.handleNewQuotingModeChangeRequest(true);
+        },15000)
+
         _exchangeConnectivity.ConnectChanged.on(() => this.updateParameters());
     }
 
     private handleNewQuotingModeChangeRequest = (v: boolean) => {
+        console.log("\n## active-states.ts handleNewQuotingModeChangeREquest : ", v);
         if (v !== this._savedQuotingMode) {
             this._savedQuotingMode = v;
             this._log.info("Changed saved quoting state", this._savedQuotingMode);
@@ -50,6 +61,7 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
     };
 
     private reevaluateQuotingMode = (): boolean => {
+        console.log("\n## active-state.ts reevaluateQuotingMode : this._exchangeConnectivity.connectStatus : ",this._exchangeConnectivity.connectStatus);
         if (this._exchangeConnectivity.connectStatus !== Models.ConnectivityStatus.Connected) return false;
         return this._savedQuotingMode;
     };

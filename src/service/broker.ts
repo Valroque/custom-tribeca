@@ -104,7 +104,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         return Utils.roundSide(price, this._baseBroker.minTickIncrement, side);
     }
 
-    sendOrder = (order : Models.SubmitNewOrder) : Models.SentOrder => {
+    sendOrder = async (order : Models.SubmitNewOrder) => {
         console.log("## broker sendOrder : ", order);
         const orderId = this._oeGateway.generateClientOrderId();
 
@@ -143,16 +143,21 @@ export class OrderBroker implements Interfaces.IOrderBroker {
          * 5. replace the alphanumeric ID by the one received via above steps
          * 6. then do the updateOrderState
          */
-        return this._oeGateway.sendOrder(rpt)
-        .then((data) => {
-            console.log("## promise x : ",data); 
-            rpt.orderId = data.toString();
-            this.updateOrderState(rpt);
-        })
-        .then(() => {
-            return new Models.SentOrder(rpt.orderId);
-        })
-   
+        // return this._oeGateway.sendOrder(rpt)
+        // .then((data) => {
+        //     console.log("## promise x : ",data); 
+        //     rpt.orderId = data.toString();
+        //     this.updateOrderState(rpt);
+        // })
+        // .then(() => {
+        //     return new Models.SentOrder(rpt.orderId);
+        // })
+
+        const sendOrderId = await this._oeGateway.sendOrder(rpt);
+        rpt.orderId = sendOrderId.toString();
+        this.updateOrderState(rpt);
+
+        return new Models.SentOrder(rpt.orderId);   
     };
 
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {

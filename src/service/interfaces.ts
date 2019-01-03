@@ -73,7 +73,7 @@ export interface ITradeBroker {
 }
 
 export interface IOrderBroker extends ITradeBroker {
-    sendOrder(order: Models.SubmitNewOrder): Models.SentOrder;
+    sendOrder(order: Models.SubmitNewOrder);
     cancelOrder(cancel: Models.OrderCancel);
     replaceOrder(replace: Models.CancelReplaceOrder): Models.SentOrder;
     OrderUpdate: Utils.Evt<Models.OrderStatusReport>;

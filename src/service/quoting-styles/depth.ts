@@ -33,6 +33,8 @@ export class DepthQuoteStyle implements StyleHelpers.QuoteStyle {
                 askPx = a.price;
             }
         }
+
+        console.log("\n## depth.ts GenerateQuote : askPx : ",askPx)
      
          return new StyleHelpers.GeneratedQuote(bidPx, size, askPx, size);
      };

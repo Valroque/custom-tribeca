@@ -24,13 +24,13 @@ export class Quoter {
         this._askQuoter = new ExchangeQuoter(broker, exchBroker, Models.Side.Ask);
     }
 
-    public updateQuote = (q: Models.Timestamped<Models.Quote>, side: Models.Side): Models.QuoteSent => {
+    public updateQuote = async (q: Models.Timestamped<Models.Quote>, side: Models.Side) => {
         console.log("\n## quoter.ts updateQuote is called");
         switch (side) {
             case Models.Side.Ask:
-                return this._askQuoter.updateQuote(q);
+                return await this._askQuoter.updateQuote(q);
             case Models.Side.Bid:
-                return this._bidQuoter.updateQuote(q);
+                return await this._bidQuoter.updateQuote(q);
         }
     };
 
@@ -83,7 +83,7 @@ export class ExchangeQuoter {
         }
     };
 
-    public updateQuote = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
+    public updateQuote = async (q: Models.Timestamped<Models.Quote>) => {
         console.log("\n## quoter.ts updateQuote is called");
         if (this._exchBroker.connectStatus !== Models.ConnectivityStatus.Connected)
             return Models.QuoteSent.UnableToSend;
@@ -91,7 +91,14 @@ export class ExchangeQuoter {
         if (this._activeQuote !== null) {
             return this.modify(q);
         }
-        return this.start(q);
+
+        // let startResponse;
+
+        // const startPromise = this.start(q).then((data) => startResponse = data);
+        // await startPromise;
+        // return startResponse;
+
+        return await this.start(q);
     };
 
     public cancelQuote = (t: Date): Models.QuoteSent => {
@@ -107,14 +114,16 @@ export class ExchangeQuoter {
         return Models.QuoteSent.Modify;
     };
 
-    private start = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
+    private start = async (q: Models.Timestamped<Models.Quote>) => {
         console.log("\n## quoter.ts start is called");
         const existing = this._activeQuote;
 
         const newOrder = new Models.SubmitNewOrder(this._side, q.data.size, Models.OrderType.Limit,
             q.data.price, Models.TimeInForce.GTC, this._exchange, q.time, true, Models.OrderSource.Quote);
 
-        const sent = this._broker.sendOrder(newOrder);
+        const sent = await this._broker.sendOrder(newOrder);
+        
+        console.log("\n## quoter.ts start : sent : ",sent);
 
         const quoteOrder = new QuoteOrder(q.data, sent.sentOrderClientId);
         this.quotesSent.push(quoteOrder);
@@ -127,6 +136,8 @@ export class ExchangeQuoter {
         if (this._activeQuote === null) {
             return Models.QuoteSent.UnsentDelete;
         }
+
+        console.log("\n## quoter.ts stop : this._activeQuote : ", this._activeQuote);
 
         const cxl = new Models.OrderCancel(this._activeQuote.orderId, this._exchange, t);
         this._broker.cancelOrder(cxl);

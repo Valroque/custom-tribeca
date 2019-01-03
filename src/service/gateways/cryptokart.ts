@@ -30,7 +30,7 @@ class ws {
     private readonly _authenticationBearer;
 
     constructor(onTrade?) {
-        this._authenticationBearer = 'zDMv8cZpYp2crKIh1S0WxWPzBz98okwJmfUSVKVGAf9pkOOuR43rS6yN6OKmIbYW4vXnVPd5pj98OgQVOuK2IlN8UUVayIjqTBPwAy0pone59PciAmYpvLy77cSZaskQLisasSELzvXmA0MohcGqcMsXstRyYz3uY8sZPSjihCfsHsKf2XzKf0KsZpN2X7V0S5MRDL1ucLX04QpnB6lt2WUsEQfyOLsSBUmaxrWe6Caydepp73iOHYFxtWLqXZm';
+        this._authenticationBearer = 'aIF1GJ7z5QGagqRKPUmBdyuJxazc9JHjk5JG6K5BwohjFPHfNJ7K7r3hFy4KSxYR3Hd2rE7VFvRdtf6aeYPvEZvSoePJefwnJlFtS6Y41GB0CCSsz1FMvKiRoRM2TLi2zw1RJFuG02xDlQkJDvhj6mG9LrViJPhCINtKJ3BCfW75WnUhJpeuVpCWsBo4AofqRLoj8thU7eAlS64Fs51qYq1eYpiRD7LDv7Vd3llEns0eQpFpI0jxgGxbGN8YNp8';
 
         this.socket = new WebSocket("wss://test.cryptokart.io:453", {rejectUnauthorized: false});
 
@@ -763,7 +763,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                 "market_name" : this._symbolProvider.symbol,
                 "side" : CryptokartOrderEntryGateway.getSide(order.side),
                 "amount" : (order.quantity * _lotMultiplier).toString(),
-                "price" : (order.price).toString(),
+                "price" : (Math.floor(order.price*100)/100).toString(),
             }
         } else {
 
