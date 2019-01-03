@@ -115,6 +115,11 @@ export class QuotingEngine {
                 unrounded.bidSz = Math.min(params.aprMultiplier*params.size, targetBasePosition - totalBasePosition);
         }
         
+        console.log("\n## latestPosition : ",latestPosition);
+        console.log("## totalBasePosition : ",totalBasePosition);
+        console.log("## targetBasePosition : ",targetBasePosition);
+        console.log("## params.positionDivergence : ", params.positionDivergence);
+
         if (totalBasePosition > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;

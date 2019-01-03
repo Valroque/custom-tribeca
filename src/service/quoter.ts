@@ -91,13 +91,7 @@ export class ExchangeQuoter {
         if (this._activeQuote !== null) {
             return this.modify(q);
         }
-
-        // let startResponse;
-
-        // const startPromise = this.start(q).then((data) => startResponse = data);
-        // await startPromise;
-        // return startResponse;
-
+         
         return await this.start(q);
     };
 
@@ -122,7 +116,7 @@ export class ExchangeQuoter {
             q.data.price, Models.TimeInForce.GTC, this._exchange, q.time, true, Models.OrderSource.Quote);
 
         const sent = await this._broker.sendOrder(newOrder);
-        
+
         console.log("\n## quoter.ts start : sent : ",sent);
 
         const quoteOrder = new QuoteOrder(q.data, sent.sentOrderClientId);
