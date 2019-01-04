@@ -52,8 +52,8 @@ export class QuoteSender {
             private _fv: FairValue.FairValueEngine,
             private _broker: Interfaces.IMarketDataBroker,
             private _details: Interfaces.IBroker) {
-        _activeRepo.NewParameters.on(() => this.sendQuote(_timeProvider.utcNow()));
-        _quotingEngine.QuoteChanged.on(() => this.sendQuote(Utils.timeOrDefault(_quotingEngine.latestQuote, _timeProvider)));
+        _activeRepo.NewParameters.on(() => this.sendQuote(_timeProvider.utcNow()).catch((err) => console.log(err)));
+        _quotingEngine.QuoteChanged.on(() => this.sendQuote(Utils.timeOrDefault(_quotingEngine.latestQuote, _timeProvider)).catch((err) => console.log(err)));
         _statusPublisher.registerSnapshot(() => this.latestStatus === null ? [] : [this.latestStatus]);
     }
 
@@ -101,7 +101,12 @@ export class QuoteSender {
         //console.log("\n## quote-sender.ts sendQuote : bidStatus : ",bidStatus);
         var askAction: Models.QuoteSent;
         if (askStatus === Models.QuoteStatus.Live) {
-            askAction = await this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);
+            try {
+                askAction = await this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);
+            }
+            catch (e) {
+                console.error("\n## Error in Placing a New Order : Error : ",e);
+            }
         }
         else {
             askAction = this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Ask, t));

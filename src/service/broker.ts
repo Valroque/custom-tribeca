@@ -153,11 +153,18 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         //     return new Models.SentOrder(rpt.orderId);
         // })
 
-        const sendOrderId = await this._oeGateway.sendOrder(rpt);
+        let sendOrderId;
+        try {
+            sendOrderId = await this._oeGateway.sendOrder(rpt);
+        }
+        catch(e) {
+            return Promise.reject(e);
+        }
+
         rpt.orderId = sendOrderId.toString();
         this.updateOrderState(rpt);
-
         return new Models.SentOrder(rpt.orderId);   
+
     };
 
     replaceOrder = (replace : Models.CancelReplaceOrder) : Models.SentOrder => {
@@ -176,7 +183,7 @@ export class OrderBroker implements Interfaces.IOrderBroker {
             quantity: replace.quantity
         };
 
-        this._oeGateway.replaceOrder(this.updateOrderState(rpt));        
+        this._oeGateway.replaceOrder(this.updateOrderState(rpt)).catch((err) => console.log("\n## error in broker.ts replaceOrder : ",err));        
 
         return new Models.SentOrder(report.orderId);
     };
@@ -392,13 +399,13 @@ export class OrderBroker implements Interfaces.IOrderBroker {
         _orderStatusPublisher.registerSnapshot(() => this.orderStatusSnapshot());
         _tradePublisher.registerSnapshot(() => _.takeRight(this._trades, 100));
 
-        _submittedOrderReciever.registerReceiver((o : Models.OrderRequestFromUI) => {
+        _submittedOrderReciever.registerReceiver(async (o : Models.OrderRequestFromUI) => {
             this._log.info("got new order req", o);
             try {
                 const order = new Models.SubmitNewOrder(Models.Side[o.side], o.quantity, Models.OrderType[o.orderType],
                     o.price, Models.TimeInForce[o.timeInForce], this._baseBroker.exchange(), _timeProvider.utcNow(), 
                     false, Models.OrderSource.OrderTicket);
-                this.sendOrder(order);
+                await this.sendOrder(order);
             }
             catch (e) {
                 this._log.error(e, "unhandled exception while submitting order", o);

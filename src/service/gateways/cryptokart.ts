@@ -30,7 +30,7 @@ class ws {
     private readonly _authenticationBearer;
 
     constructor(onTrade?) {
-        this._authenticationBearer = 'eGdIIrCWjVZUf8t59qXeiDupKg1bf2FSIJRnS81meGIdcbLp2EZKHI9irU7iLOkJRPfUBuY1EPvTwMMb82LAVhtXZHFa05BeVucaLKJKFD527c8Za4eDlX7MOaMAIEYJ9HLrRx4yw0fEppVSkafeVQA6lyf5tXYSLjQcDlN3YU6PelRZ7huZrXqcSRAkEE00Vfv3ERG3PqJOEMzqLME8nJwilWum94EiJhY9naz6OlZjSLtavIntHz4uCek4dZA';
+        this._authenticationBearer = 'oMfQDQELWbmmW0WFXIHQ4HuZ3NwH3IE6xO7Wxxibikn05IT8bszB81OO5ROZDkGyhgKYWXWzy7kn0j1IQ71TxJueuwGWcgKMwr9fyDbEdPzI0cWdHpTI2dRk6brjN9fSY8S4dpW9QlF7uzjJN9IpcBZowUt5bOz7zJIB5W9aeiSRKH4nBkRVuLDA6p56WgiZFrpUzTvvUF1qFviClwIF01IPEJnHwHH7qdmJn7w7BaHAPFePV8yzZi8CTFz2Vg0';
 
         this.socket = new WebSocket("wss://test.cryptokart.io:453", {rejectUnauthorized: false});
 
@@ -735,12 +735,18 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         })
     };
 
-    replaceOrder = (replace : Models.OrderStatusReport) => {
+    replaceOrder = async (replace : Models.OrderStatusReport) => {
+        console.log("\n## in replace order...");
         this.cancelOrder(replace);
-        return this.sendOrder(replace);
+        try {
+            return await this.sendOrder(replace);
+        }
+        catch (e) {
+            console.log("## error in replace order : ",e);
+        }
     };
 
-    sendOrder = (order : Models.OrderStatusUpdate) => {
+    sendOrder = async (order : Models.OrderStatusUpdate) => {
 
         console.log("## testing sendOrder : ", order)
 
@@ -781,16 +787,41 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         let finalOrderId : number;
 
         // order ID is returned to be saved, updated by the tribeca for its internal use. It is used to replace the existing alphanumeric ID which tribeca uses ( which we can't work with )
-        return this.sendPostRequest(url, finalOrderToSend)
-        .then( (data: {error,result}) => {
-            console.log('Order Sent:', data);
-            finalOrderId =  (data.result.id);
+        // return this.sendPostRequest(url, finalOrderToSend)
+        // .then( (data: {error,result}) => {
+        //     if(!data.error) {
+        //         console.log('Order Sent:', data);
+        //         finalOrderId =  (data.result.id);
+        //         this.changeConnectionStatus(Models.ConnectivityStatus.Connected);
+        //         return finalOrderId;
+        //     } else {
+        //         return Promise.reject(data.error);
+        //     }
+        // })
+        // .catch( e => {
+        //     this._log.error(e, "Error processing JSON response ", e);
+        // })
+
+        let sendPostResult;
+
+        try {
+            sendPostResult = await this.sendPostRequest(url, finalOrderToSend);
+        }
+        catch (e) {
+            console.log("\n## sendPostError in cryptokart.ts");
+            return Promise.reject(e)
+        }
+
+        if(!sendPostResult['error']) {
+            console.log('Order Sent:', sendPostResult);
+            finalOrderId =  (sendPostResult['result']['id']);
             this.changeConnectionStatus(Models.ConnectivityStatus.Connected);
             return finalOrderId;
-        })
-        .catch( e => {
-            this._log.error(e, "Error processing JSON response ", e);
-        })
+        } else {
+            console.log("\n## Error in placing a send order : ",sendPostResult['error']);
+            return Promise.reject(sendPostResult['error'])
+        }
+
     };
 
     private static getStatus(m : ExecutionReport) : Models.OrderStatus {

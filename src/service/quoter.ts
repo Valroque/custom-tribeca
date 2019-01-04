@@ -28,7 +28,13 @@ export class Quoter {
         console.log("\n## quoter.ts updateQuote is called");
         switch (side) {
             case Models.Side.Ask:
-                return await this._askQuoter.updateQuote(q);
+                try {
+                    return await this._askQuoter.updateQuote(q);
+                }
+                catch (e) {
+                    console.log("\n## unahdnled promise 3 in quoter.ts...")
+                    return Promise.reject(e);
+                }
             case Models.Side.Bid:
                 return await this._bidQuoter.updateQuote(q);
         }
@@ -92,7 +98,13 @@ export class ExchangeQuoter {
             return this.modify(q);
         }
          
-        return await this.start(q);
+        try {
+            return await this.start(q);
+        } 
+        catch(e) {
+            console.log("\n## unhandled promise 2 in quoter.ts...")
+            return Promise.reject(e);
+        }
     };
 
     public cancelQuote = (t: Date): Models.QuoteSent => {
@@ -104,7 +116,7 @@ export class ExchangeQuoter {
 
     private modify = (q: Models.Timestamped<Models.Quote>): Models.QuoteSent => {
         this.stop(q.time);
-        this.start(q);
+        this.start(q).catch((err) => console.log(err));
         return Models.QuoteSent.Modify;
     };
 
@@ -115,14 +127,19 @@ export class ExchangeQuoter {
         const newOrder = new Models.SubmitNewOrder(this._side, q.data.size, Models.OrderType.Limit,
             q.data.price, Models.TimeInForce.GTC, this._exchange, q.time, true, Models.OrderSource.Quote);
 
-        const sent = await this._broker.sendOrder(newOrder);
+        let sent;
+        try {
+            sent = await this._broker.sendOrder(newOrder);    
+        }
+        catch(e) {
+            console.log("\n## unhandled promise 1 in quoter.ts...");
+            return Promise.reject(e);
+        }
 
         console.log("\n## quoter.ts start : sent : ",sent);
-
         const quoteOrder = new QuoteOrder(q.data, sent.sentOrderClientId);
         this.quotesSent.push(quoteOrder);
         this._activeQuote = quoteOrder;
-
         return Models.QuoteSent.First;
     };
 
