@@ -35,7 +35,12 @@ export class Quoter {
                     return Promise.reject(e);
                 }
             case Models.Side.Bid:
-                return await this._bidQuoter.updateQuote(q);
+                try {
+                    return await this._bidQuoter.updateQuote(q);
+                }
+                catch (e) {
+                    return Promise.reject(e);
+                }
         }
     };
 
