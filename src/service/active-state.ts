@@ -41,12 +41,15 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
         _rec.registerReceiver(this.handleNewQuotingModeChangeRequest);
 
         // therefore, i triggered the function on my own with the boolean value as expected...
-        setTimeout(() => {
-            console.log("\n## Calling this.handleNewQuotingModeChangeRequest ... ");
-            this.handleNewQuotingModeChangeRequest(true);
-        },15000)
+        // setTimeout(() => {
+        //     console.log("\n## Calling this.handleNewQuotingModeChangeRequest ... ");
+        //     this.handleNewQuotingModeChangeRequest(true);
+        // },15000)
 
-        _exchangeConnectivity.ConnectChanged.on(() => this.updateParameters());
+        _exchangeConnectivity.ConnectChanged.on(() => {
+            console.log("\n## EXCHANGE CONNECTIVITY STATUS CHANGE IN ACTIVE-STATE.TS...");
+            this.updateParameters()}
+            );
     }
 
     private handleNewQuotingModeChangeRequest = (v: boolean) => {
@@ -67,9 +70,12 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
     };
 
     private updateParameters = () => {
+
+        console.log("\n## UPDATE PARAMETERS CALLED ...");
         var newMode = this.reevaluateQuotingMode();
 
         if (newMode !== this._latest) {
+            console.log("\n## INSIDE THE IF BLOCK...");
             this._latest = newMode;
             this._log.info("Changed quoting mode to", this.latest);
             this.NewParameters.trigger();

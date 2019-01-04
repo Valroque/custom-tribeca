@@ -71,6 +71,8 @@ const serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_S
 
 const config = new Config.ConfigProvider();
 
+const startQuotingMethod = (process.argv[2] == "yes" || process.argv[2] == "YES" || process.argv[2] == "Yes" || process.argv[2] == "y" || process.argv[2] == "Y") ? true : false;
+
 let exitingEvent : () => Promise<number> = () => new Promise(() => 0);
 
 const performExit = () => {
@@ -115,6 +117,8 @@ function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
 const pair = ParseCurrencyPair(config.GetString("TradedPair"));
 
 const defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, new Date(1));
+
+// SET THE DEFAULT QUOTING PARAMETERS, E.G. TBP, APR, pDiv, FV MODE, Quoting Mode, etc
 const defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, 
     Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300, .095, 2*.095, .095, 3, .1);
 
@@ -276,9 +280,12 @@ const runTradingSystem = async (classes: SimulationClasses) : Promise<void> => {
         activePersister.loadLatest(),
         rfvPersister.loadAll(50)
     ])
-            
+    
+    //console.log("## INIT ACTIVE : ",initActive);
+    //console.log("## DEFAULT ACTIVE : ",defaultActive);
     _.defaults(initParams, defaultQuotingParameters);
     _.defaults(initActive, defaultActive);
+    //console.log("## INIT ACTIVE : ",initActive);
 
     const orderCache = new Broker.OrderStateCache();
     const timeProvider = classes.timeProvider;
@@ -334,7 +341,29 @@ const runTradingSystem = async (classes: SimulationClasses) : Promise<void> => {
 
     const safetyCalculator = new Safety.SafetyCalculator(timeProvider, paramsRepo, orderBroker, paramsRepo, tradeSafetyPublisher, tsvPersister);
 
-    const startQuoting = (moment(timeProvider.utcNow()).diff(moment(initActive.time), 'minutes') < 3 && initActive.active);
+
+    /**
+     * PREVIOUS SCENARIO
+     * 1. ActivePersister checks for ActiveChange document in MongoDB
+     * 2. If found, initActive contains the document from the DB. If not, it contains a default document with time starting from January 1, 1970
+     * 3. initActive time is compared with the current time, if it's less than 3 minutes, the quoting starts ( auto placing of buy and sell orders) - That's how Tribeca designed it
+     * 4. Else, it won't start quoting.
+     * Finally, a boolean value is returned whether to start the quoting or not
+     */
+    let startQuoting = (moment(timeProvider.utcNow()).diff(moment(initActive.time), 'minutes') < 3 && initActive.active); 
+
+    /**
+     * CURRENT FIX
+     * 1. Pass an argument "yes" or "Y" or "Yes" or "YES" to start the automatic quoting.
+     * 2. Default, it won't start quoting. i.e. value of startQuoting will be false.
+     */
+
+    if(startQuotingMethod) {
+        startQuoting = true;
+    } else {
+        startQuoting = false;
+    }
+
     console.log("## main.ts : startQuoting : ",startQuoting);
     const active = new Active.ActiveRepository(startQuoting, broker, activePublisher, activeReceiver);
 
