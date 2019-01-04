@@ -32,7 +32,6 @@ export class Quoter {
                     return await this._askQuoter.updateQuote(q);
                 }
                 catch (e) {
-                    console.log("\n## unahdnled promise 3 in quoter.ts...")
                     return Promise.reject(e);
                 }
             case Models.Side.Bid:
@@ -102,7 +101,6 @@ export class ExchangeQuoter {
             return await this.start(q);
         } 
         catch(e) {
-            console.log("\n## unhandled promise 2 in quoter.ts...")
             return Promise.reject(e);
         }
     };
@@ -132,7 +130,6 @@ export class ExchangeQuoter {
             sent = await this._broker.sendOrder(newOrder);    
         }
         catch(e) {
-            console.log("\n## unhandled promise 1 in quoter.ts...");
             return Promise.reject(e);
         }
 

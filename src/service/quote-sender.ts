@@ -105,7 +105,7 @@ export class QuoteSender {
                 askAction = await this._quoter.updateQuote(new Models.Timestamped(quote.ask, t), Models.Side.Ask);
             }
             catch (e) {
-                console.error("\n## Error in Placing a New Order : Error : ",e);
+                console.error("\n## Error in Placing a New Order : Error | askAction : ",e);
             }
         }
         else {
@@ -114,7 +114,12 @@ export class QuoteSender {
 
         var bidAction: Models.QuoteSent;
         if (bidStatus === Models.QuoteStatus.Live) {
-            bidAction = await this._quoter.updateQuote(new Models.Timestamped(quote.bid, t), Models.Side.Bid);
+            try {
+                bidAction = await this._quoter.updateQuote(new Models.Timestamped(quote.bid, t), Models.Side.Bid);
+            }
+            catch (e) {
+                console.error("\n## Error in Placing a New Order : Error | bidAction : ",e);
+            }
         }
         else {
             bidAction = this._quoter.cancelQuote(new Models.Timestamped(Models.Side.Bid, t));
