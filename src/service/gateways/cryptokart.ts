@@ -30,7 +30,7 @@ class ws {
     private readonly _authenticationBearer;
 
     constructor(onTrade?) {
-        this._authenticationBearer = '5cFOYviEj2iwrx9LVCQayiLswlCjoivgNLqUKltg2XFlIqm5dB7jccv41t06wWoAORhfiQwuZYJLkkMT3STda2vFbPVgwX8UmzEvyJxpO8XGYM1bT8ICEJaJ3z0y9nfjTSVmeaTlEi2DxFK8FzwbPt3u2d9tkmmXkyCk7UojLtlQumwfWQhGWSCpZAa7F9iXJHkIQHQz3q9NKUIpBglcUucwyE2xJ5DFkSUcpFW4QYzrphbj7lmSM7XDBW2T4jc';
+        this._authenticationBearer = 'DaJaGvFzmMQtyFoHxvooVKT1NbWxBloAo2tqAPqvbad2VIrqteL2bXyORjGK93bWuHWhNCqw3j0K0JTyVogdHNzoHmRL2ShY2zHWfegyFRnc9eHnByWLJy8ukvmIp4rhxSgtBWl7nJfGyIWOEP4NjULnv3g93impKBHLBhsWmm98wgS7Gn7oMq5w7jFlYNxzE9hOpRGEeOdvLv6D7Kj65TAODI194wB3OAxqJJ3U7wLQnSsnQgRed45TAgCHNyj';
 
         this.socket = new WebSocket("wss://test.cryptokart.io:453", {rejectUnauthorized: false});
 
@@ -1114,7 +1114,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
         // this function fetches the initial position status via a http call. the subsequent ones are fetched via a socket subscription.
         //this.onTick();
         //setInterval(this.onTick, 15000);
-        setTimeout(this.onTick, 10000);
+        setTimeout(this.onTick, 15000);
 
         // socket for the assets query
         this._positionUpdateClient.socket.customSend(JSON.stringify({
@@ -1203,6 +1203,7 @@ export async function createCryptokart(config: Config.IConfigProvider, orders: I
         let symbols = await Utils.postJSON<CryptokartMarketList>(symbolsUrl);
 
         console.log("## inside createCryptokart...");
+        console.log("\n## SYMBOLS RESULT : ",symbols.result);
         
         if (symbols.result) {
             const symbolProvider = new CryptokartSymbolProvider(pair);
@@ -1210,6 +1211,7 @@ export async function createCryptokart(config: Config.IConfigProvider, orders: I
             for (let s in symbols.result) {
                 if (symbols.result[s].name === symbolProvider.symbol) {
                     let abc = new Cryptokart(config, symbolProvider, parseFloat(symbols.result[s].min_amount), pair);
+                    console.log("\n## min tick increment : ",parseFloat(symbols.result[s].min_amount));
                     console.log("## Cryptokart Object Returned")
                     return abc;
                 }   

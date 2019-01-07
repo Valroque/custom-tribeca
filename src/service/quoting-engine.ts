@@ -70,8 +70,7 @@ export class QuotingEngine {
         _ewma.Updated.on(recalcWithoutInputTime);
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
         _targetPosition.NewTargetPosition.on(recalcWithoutInputTime);
-        _safeties.NewValue.on(recalcWithoutInputTime);
-        
+        _safeties.NewValue.on(recalcWithoutInputTime);        
         _timeProvider.setInterval(recalcWithoutInputTime, moment.duration(1, "seconds"));
     }
 
