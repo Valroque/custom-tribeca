@@ -6,11 +6,15 @@ import _ = require("lodash");
 import * as request from "request";
 import * as Q from "q";
 import WebSocket = require('ws');
+import crypto = require('crypto');
+import Config = require("./config");
+
  
 
 require('events').EventEmitter.prototype._maxListeners = 100;
 
-const _authorizationBearer: string = 'DaJaGvFzmMQtyFoHxvooVKT1NbWxBloAo2tqAPqvbad2VIrqteL2bXyORjGK93bWuHWhNCqw3j0K0JTyVogdHNzoHmRL2ShY2zHWfegyFRnc9eHnByWLJy8ukvmIp4rhxSgtBWl7nJfGyIWOEP4NjULnv3g93impKBHLBhsWmm98wgS7Gn7oMq5w7jFlYNxzE9hOpRGEeOdvLv6D7Kj65TAODI194wB3OAxqJJ3U7wLQnSsnQgRed45TAgCHNyj';
+const config = new Config.ConfigProvider();
+const _authorizationBearer: string = config.GetString("AuthorizationBearer");
 
 export const date = () => new Date();
 
@@ -201,4 +205,34 @@ export function postJSON<T>(url: string): Promise<T> {
         }
         )
     })
+}
+
+export function sendOrderBinance(query, signature) {
+    return new Promise((resolve, reject) => {
+        request({
+            'method': 'POST',
+            'url': 'https://api.binance.com/api/v3/order/test' + '?' + query + '&signature=' + signature, 
+            'headers': {
+                'Content-type': 'application/x-www-form-urlencoded',
+                'X-MBX-APIKEY': config.GetString("BINANCE_API_KEY")
+            }
+        },
+            (err,body,res) => {
+            if(err) {
+                reject(err);
+            } else {
+                resolve(res);
+            }
+        })
+    })
+}
+
+export function createSignature(requestBody) {
+    let query = Object.keys(requestBody).reduce((a,k) => {
+        a.push(k + '=' + encodeURIComponent(requestBody[k]))
+        return a;
+    },[]).join('&');
+
+    let signature = crypto.createHmac('sha256', config.GetString("BINANCE_SECRET_KEY")).update(query).digest('hex');
+    return {query, signature}
 }

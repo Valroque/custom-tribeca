@@ -54,10 +54,10 @@ export class FairValueEngine {
         private _fvPersister: Persister.IPersist<Models.FairValue>) {
         this.askHitBtc = [];
         this.bidHitBtc = [];
-        //_qlParamRepo.NewParameters.on(() => this.recalcFairValue(_timeProvider.utcNow()));
-        //_filtration.FilteredMarketChanged.on(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket, _timeProvider)));
+        _qlParamRepo.NewParameters.on(() => this.recalcFairValue(_timeProvider.utcNow()));
+        _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket, _timeProvider)));
         _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
-        this.hitBtcOrderBookSocket = new Utils.WebSoc('wss://api.hitbtc.com/api/2/ws', this.recalcFairValueHitBtc, this.onHitBtcSocket);
+        //this.hitBtcOrderBookSocket = new Utils.WebSoc('wss://api.hitbtc.com/api/2/ws', this.recalcFairValueHitBtc, this.onHitBtcSocket);
 
     }
 

@@ -28,9 +28,12 @@ const _lotMultiplier = 1;
 class ws {
     public socket;
     private readonly _authenticationBearer;
+    private readonly config;
 
     constructor(onTrade?) {
-        this._authenticationBearer = 'DaJaGvFzmMQtyFoHxvooVKT1NbWxBloAo2tqAPqvbad2VIrqteL2bXyORjGK93bWuHWhNCqw3j0K0JTyVogdHNzoHmRL2ShY2zHWfegyFRnc9eHnByWLJy8ukvmIp4rhxSgtBWl7nJfGyIWOEP4NjULnv3g93impKBHLBhsWmm98wgS7Gn7oMq5w7jFlYNxzE9hOpRGEeOdvLv6D7Kj65TAODI194wB3OAxqJJ3U7wLQnSsnQgRed45TAgCHNyj';
+        this.config = new Config.ConfigProvider();
+
+        this._authenticationBearer = this.config.GetString("AuthorizationBearer");
 
         this.socket = new WebSocket("wss://test.cryptokart.io:453", {rejectUnauthorized: false});
 
@@ -347,11 +350,25 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
 
+    private readonly marketPair: string;
+
     private updateDealData = (t) => {
         console.log("\n## deals data : \n",t.params[1]);
         if (t.params && t.params.length) {
             t.params[1].forEach( trade => {
                 this.MarketTrade.trigger(new Models.GatewayMarketTrade(trade.price, trade.amount, trade.time, false, trade.type === 'buy' ? Models.Side.Ask : Models.Side.Bid));
+                
+                // let binanceRequestObject = {
+                //     'side': trade.type === 'buy'? 'BUY' : 'SELL',
+                //     'price': trade.price,
+                //     'symbol': this.marketPair,
+                //     'quantity': trade.amount,
+                //     'type': 'MARKET',
+                //     'timeInForce': 'GTC',
+                //     'timestamp': new Date().getTime()
+                // }
+
+                //console.log(binanceRequestObject);
             })
         }
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
@@ -549,6 +566,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
         private readonly _minTick: number) {
 
         this._authorizationBearer = config.GetString("AuthorizationBearer");
+        this.marketPair = config.GetString("TradedPair").split("/").join("");
 
         // this.MarketData.on((data) => {
         //     console.log('***Console all market data updates:', data);

@@ -58,6 +58,8 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
         this.MarketTrade.trigger(t);
         this._marketTradePublisher.publish(t);
         this._persister.persist(t);
+        //console.log("\nINSIDE MARKET TRADE BROKER : ")
+        //console.log(this.marketTrades);
     };
 
     constructor(
@@ -69,6 +71,8 @@ export class MarketTradeBroker implements Interfaces.IMarketTradeBroker {
         private _persister: P.IPersist<Models.MarketTrade>,
         initMkTrades: Array<Models.MarketTrade>) {
             
+        //console.log("\n INIT MARKET TRADES : ");
+        //console.log(initMkTrades);
         initMkTrades.forEach(t => this.marketTrades.push(t));
         this._log.info("loaded %d market trades", this.marketTrades.length);
 

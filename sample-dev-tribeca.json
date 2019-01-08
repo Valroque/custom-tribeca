@@ -9,7 +9,9 @@
     "ShowAllOrders": "false",
 
     "AuthorizationBearer": "6dMfggURMyg7vo09fKjwKhVpO6LbHWDxOsCapfqtW9PZN0VssDlhIntQHiT9h6IevKd5n0wANPCxP47FHLEWO82342CQ7ysjQD2nUN5s7ebVPKxqFClN4JW8sAjb4WJJOKfoLbGNiGihDV226SkrpBvGZ4SUgHG0NsL0KQqU4sTPy6ymP2LBkagkrAYGB1HgTaxnIUNI2UPqd2Y5cqTeqCYMKCZN2DnzBNqz1mfJX83kCjJGB9XLKg6jaegOh7e",
-    
+    "BINANCE_API_KEY": "fZdc4P1BQ9ZjBiGm21DYADZcR5blOZCxLJtujQqItYQMEYX8iZch1vUxR8v5dIPm",
+    "BINANCE_SECRET_KEY": "PbDQnxKkR5fFb3ZWHsZIUI4XhwM9RqTCyOqsTB08lGRnYmCSsp13RD8pz0k3uvrP",
+
     "CryptokartPullUrl": "https://test.cryptokart.io:1337",
     "CryptokartOrderEntryUrl": "wss://test.cryptokart.io:453",
     "CryptokartMarketDataUrl": "wss://test.cryptokart.io:453",
