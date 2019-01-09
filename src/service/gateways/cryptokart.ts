@@ -1190,6 +1190,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._authorizationBearer = config.GetString("AuthorizationBearer");
         this.cryptokartTradeEngineUrl = config.GetString("CryptokartTradeEngine");
 
+        // binanceMarketOrders collection contains the response of binance market orders...
         this.mongoBinance = new Utils.MongoSave('binanceMarketOrders');
         this.cryptokartAccounts = config.GetString("CryptokartAccountIDs").split(',');
         this.cryptokartAccounts = this.cryptokartAccounts.map(x => +x);

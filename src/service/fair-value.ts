@@ -44,6 +44,10 @@ export class FairValueEngine {
     }
 
     private hitBtcOrderBookSocket;
+    private binanceOrderBookSocket;
+
+    private askBinance: Models.MarketSide[] = [];
+    private bidBinance: Models.MarketSide[] = [];
 
     constructor(
         private _details: Interfaces.IBroker,
@@ -57,6 +61,27 @@ export class FairValueEngine {
         _qlParamRepo.NewParameters.on(() => this.recalcFairValue(_timeProvider.utcNow()));
         _filtration.FilteredMarketChanged.on(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket, _timeProvider)));
         _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
+
+        Utils.getJSON('https://www.binance.com/api/v1/depth?symbol=BTCUSDT&limit=10')
+        .then((binanceOrderBook) => {
+
+            this.askBinance = [];
+            this.bidBinance = [];
+
+            binanceOrderBook['bids'].forEach((order) => {
+                this.askBinance.push(new Models.MarketSide(Number(order[0]), Number(order[1])));
+            })
+
+            binanceOrderBook['asks'].forEach((order) => {
+                this.bidBinance.push(new Models.MarketSide(Number(order[0]), Number(order[1])));
+            })
+
+            console.log(this.askBinance);
+            console.log(this.bidBinance);
+
+            this.binanceOrderBookSocket = new Utils.WebSoc();
+
+        })
         //this.hitBtcOrderBookSocket = new Utils.WebSoc('wss://api.hitbtc.com/api/2/ws', this.recalcFairValueHitBtc, this.onHitBtcSocket);
 
     }
