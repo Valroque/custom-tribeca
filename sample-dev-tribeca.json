@@ -19,6 +19,8 @@
     "CryptokartApiKey": "7AC8OHL3XD",
     "CryptokartSecret": "IUHIAxsBDQXomnFnOSaymoQlLwOKk0",
     "CryptokartOrderDestination": "Cryptokart",
+    "CryptokartTradeEngine": "http://test.cryptokart.io:8080",
+    "CryptokartAccountIDs": [999,888],
 
     "HitBtcPullUrl": "http://api.hitbtc.com",
     "HitBtcOrderEntryUrl": "wss://api.hitbtc.com:8080",

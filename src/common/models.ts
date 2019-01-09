@@ -60,7 +60,8 @@ export class MarketTrade implements ITimestamped {
 
 export enum Currency { 
     USD, 
-    BTC, 
+    BTC,
+    BCH, 
     LTC, 
     EUR, 
     GBP, 

@@ -18,11 +18,11 @@ import util = require("util");
 import * as Q from "q";
 import log from "../logging";
 import WebSocket = require('ws');
+import _ = require('lodash');
 const shortId = require("shortid");
 const SortedMap = require("collections/sorted-map");
 
 const _lotMultiplier = 1;
-
 
 //socket =============================
 class ws {
@@ -78,7 +78,9 @@ class ws {
                 // positions update case
                 case 12021: console.log("## Subscribe: Positions Data", data);
                             //onTrade(data);
-                            break;       
+                            break;   
+                case 6569: console.log("## Subscribe: Order Deals Status",data); 
+                            break;
                 default:   switch(data.method) {
                                 case 'asset.update':    //updateAssetBalance(data);
                                                         console.log("## asset.update data received ##");
@@ -90,6 +92,9 @@ class ws {
                                                         break;
                                 case 'depth.update':    //onTrade(data);
                                                         console.log("## depth.update data received ##");
+                                                        onTrade(data);
+                                                        break;
+                                case 'order.update':    console.log("## Order Match Data Received ##");
                                                         onTrade(data);
                                                         break;
                                 default:                console.log('what omg', data, typeof data, data.id);
@@ -357,18 +362,6 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
         if (t.params && t.params.length) {
             t.params[1].forEach( trade => {
                 this.MarketTrade.trigger(new Models.GatewayMarketTrade(trade.price, trade.amount, trade.time, false, trade.type === 'buy' ? Models.Side.Ask : Models.Side.Bid));
-                
-                // let binanceRequestObject = {
-                //     'side': trade.type === 'buy'? 'BUY' : 'SELL',
-                //     'price': trade.price,
-                //     'symbol': this.marketPair,
-                //     'quantity': trade.amount,
-                //     'type': 'MARKET',
-                //     'timeInForce': 'GTC',
-                //     'timestamp': new Date().getTime()
-                // }
-
-                //console.log(binanceRequestObject);
             })
         }
         this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
@@ -1010,18 +1003,210 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         return shortId.generate();
     }
 
+    /**
+     * Purpose:- To keep a note of the orders placed by the bot so as to forward them to Binance whenever a deal takes place.
+     * contains the orders placed by the bot and the deals info of that specific order.
+     * format:- { orderID_1: [orderID of Orders which led to a deal...], orderID_2...}.
+     * order_ID_x is removed whenever that order has finished matching totally.
+     */
+    private orderDealsSentData = {};
+
+    /**
+     * Purpose:- To decide what should be done whenever an order matches with the order placed by the bot.
+     * Case 1:- When the order is initiated by the bot, its ID is saved in orderDealsSentData.
+     * Case 2:- When the Order is Partially Matched
+     * Case 3:- When the Order is Finished Totally
+     * 
+     * STEPS:-
+     * 1. Fetch the deals related to the order.
+     * 2. Fetch the users who placed those orders which were matched with bot's order.
+     * 3. If the user's are not Cryptokart's Accounts, Place a 'vice-versa' Order on Binance.
+     * 4. Else, Don't forward the Order to Binance
+     */
+    onOrderUpdate = async (order) => {
+        console.log("\nOrder Data : ",order.params);
+        const orderData = order.params;
+
+        switch(orderData[0]) {
+
+            case 1 :
+                this.orderDealsSentData[orderData[1].id+''] = [];       // add the new order by bot in a data store
+                console.log(`## Inserted a New Order : ${orderData[1].id} in `, this.orderDealsSentData);
+                break;
+            case 2 :
+            case 3 :
+                const orderDealReqObj = {
+                    "id": 8,
+                    "method":"order.deals",
+                    "params":[
+                         orderData[1].id,
+                         0,
+                         10
+                    ]
+                 }
+
+                 // Delay is added since the subsequent API couldn't fetch the deals record related to that order even though the order update was specificed by the sockets.
+                 await Utils.delay(100);    
+                 const orderDealData = await this.sendPostRequest(this.cryptokartTradeEngineUrl,orderDealReqObj).catch((err) => {
+                     console.error("\nERROR in orderDealData Fetch : ",err);
+                     return;
+                 });
+
+                 const records = orderDealData['result']['records'];
+                 console.log("\n## RECORDS : ",records);
+
+                 for(let rec of records) {
+
+                     const dealOrderId = +rec['deal_order_id'];
+                     
+                     // check whether we have already considered the deal for forwarding to Binance..
+                     if(!_.includes(this.orderDealsSentData[orderData[1].id+''], dealOrderId)) {
+
+                        this.orderDealsSentData[orderData[1].id+''].push(dealOrderId);
+                        
+                        const orderFinishedDataReqObj = {
+                            "id": 1,
+                            "method":"order.finished_detail",
+                            "params":[
+                                dealOrderId
+                            ]
+                         }
+
+                         // Fetch the USER who placed the order which got matched with bot's order
+                         const orderFinishedData = await this.sendPostRequest(this.cryptokartTradeEngineUrl, orderFinishedDataReqObj).catch((err) => {
+                             console.error("\nERROR in orderFinishedData Fetch : ",err);
+                             return;
+                         });
+                         console.log("\n## ORDER FINISHED DATA : ",orderFinishedData);
+
+                         // check whether that USER doesn't belong to Cryptokart's Accounts
+                         if(!_.includes(this.cryptokartAccounts, orderFinishedData['result']['user'])) {
+
+                             const binanceRequestObject = {
+                                'newClientOrderId': orderData[1].id+'',
+                                'side': orderData[1].side === 2 ? 'SELL' : 'BUY',
+                                'symbol': 'BTCUSDT',
+                                'quantity': +rec.amount,
+                                'type': 'MARKET',
+                                'timestamp': new Date().getTime()
+                            }
+            
+                            // signature is the sha256 of query string and BINANCE_SECRET_KEY
+                            const {query, signature} = Utils.createSignature(binanceRequestObject);
+                            let binanceResponse;
+
+                            try {
+                                binanceResponse = await Utils.sendOrderBinance(query,signature);
+                                console.log("\n Binance Response : ",binanceResponse);
+
+                                // demo binance response till the time we don't execute it on PROD Binance
+                                binanceResponse = {
+                                    "symbol": "BTCUSDT",
+                                    "orderId": 28,
+                                    "clientOrderId": "6gCrw2kRUAF9CvJDGP16IP",
+                                    "transactTime": 1507725176595,
+                                    "price": "1.00000000",
+                                    "origQty": "10.00000000",
+                                    "executedQty": "10.00000000",
+                                    "cummulativeQuoteQty": "10.00000000",
+                                    "status": "FILLED",
+                                    "timeInForce": "GTC",
+                                    "type": "MARKET",
+                                    "side": "SELL",
+                                    "fills": [
+                                    {
+                                        "price": "4000.00000000",
+                                        "qty": "1.00000000",
+                                        "commission": "4.00000000",
+                                        "commissionAsset": "USDT"
+                                    },
+                                    {
+                                        "price": "3999.00000000",
+                                        "qty": "5.00000000",
+                                        "commission": "19.99500000",
+                                        "commissionAsset": "USDT"
+                                    },
+                                    {
+                                        "price": "3998.00000000",
+                                        "qty": "2.00000000",
+                                        "commission": "7.99600000",
+                                        "commissionAsset": "USDT"
+                                    },
+                                    {
+                                        "price": "3997.00000000",
+                                        "qty": "1.00000000",
+                                        "commission": "3.99700000",
+                                        "commissionAsset": "USDT"
+                                    },
+                                    {
+                                        "price": "3995.00000000",
+                                        "qty": "1.00000000",
+                                        "commission": "3.99500000",
+                                        "commissionAsset": "USDT"
+                                    }
+                                    ]
+                                }
+
+                                // save it in DB
+                                const binanceCollection = await this.mongoBinance.connectToCollection();
+                                await binanceCollection.insertOne(binanceResponse).catch((err) => console.error("\nERROR in binanceCollection Insert : ",err));
+
+                            } catch (err) {
+                                console.log("\nERROR in binanceResponse : ",err);
+                            }                            
+
+                         } else {
+                             console.log("\nBot Order Finished by Cryptokart's Account. Not Forwarding to Binance..");
+                         }
+
+                     } else {
+                         break;
+                     }
+                 }
+
+                if(orderData[0] == 3) {
+                    delete this.orderDealsSentData[orderData[1].id+''];             
+                }
+
+                console.log("\n## FINAL LIST : ",this.orderDealsSentData);
+                break;
+        }
+    }
+
     private readonly _log = log("tribeca:gateway:HitBtcOE");
     private readonly _apiKey : string;
     private readonly _secret : string;
     private readonly _authorizationBearer : string;
+
+    private readonly orderDealsWs = new ws(this.onOrderUpdate);
+    private readonly cryptokartTradeEngineUrl;
+    private readonly cryptokartAccounts;
+    private readonly marketPair;
+    private mongoBinance;
+
     constructor(config : Config.IConfigProvider, private _symbolProvider: CryptokartSymbolProvider, private _details: CryptokartBaseGateway) {
         this._apiKey = config.GetString("HitBtcApiKey");
         this._secret = config.GetString("HitBtcSecret");
         this._authorizationBearer = config.GetString("AuthorizationBearer");
+        this.cryptokartTradeEngineUrl = config.GetString("CryptokartTradeEngine");
+
+        this.mongoBinance = new Utils.MongoSave('binanceMarketOrders');
+        this.cryptokartAccounts = config.GetString("CryptokartAccountIDs").split(',');
+        this.cryptokartAccounts = this.cryptokartAccounts.map(x => +x);
+        this.marketPair = config.GetString("TradedPair").split("/").join("");
 
         setTimeout(() => {
             this.changeConnectionStatus(Models.ConnectivityStatus.Connected)
         },7000);
+
+        this.orderDealsWs.socket.customSend(JSON.stringify({
+            id: 6569,
+            method: 'order.subscribe',
+            params: [
+                'BCHUSDT'
+                ]
+            }
+        ))
 
         // this._orderEntryWs = new WebSocket(config.GetString("HitBtcOrderEntryUrl"), 5000, 
         //     this.onMessage, 
@@ -1139,7 +1324,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
             id: 12021,
             method: 'asset.subscribe',
             params: [
-                'BTC','USDT'
+                'BCH','USDT'
             ]
         }))
     }

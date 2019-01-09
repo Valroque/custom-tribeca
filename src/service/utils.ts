@@ -7,6 +7,7 @@ import * as request from "request";
 import * as Q from "q";
 import WebSocket = require('ws');
 import crypto = require('crypto');
+import mongodb = require('mongodb');
 import Config = require("./config");
 
  
@@ -15,6 +16,8 @@ require('events').EventEmitter.prototype._maxListeners = 100;
 
 const config = new Config.ConfigProvider();
 const _authorizationBearer: string = config.GetString("AuthorizationBearer");
+
+export const delay = ms => new Promise(res => setTimeout(res,ms));
 
 export const date = () => new Date();
 
@@ -162,6 +165,25 @@ export class WebSoc {
     }
 }
 
+export class MongoSave {
+
+    private MongoClient;
+    private readonly config;
+    private readonly collectionName;
+
+    constructor(collectionName){
+        this.config = new Config.ConfigProvider();
+        this.MongoClient = new mongodb.MongoClient();
+        this.collectionName = collectionName;
+    }
+
+    public connectToCollection = async () => {
+        const db = await this.MongoClient.connect(this.config.GetString("MongoDbUrl"));
+        return await db.collection(this.collectionName);
+    }
+
+}
+
 export function getJSON<T>(url: string, qs?: any) : Promise<T> {
     return new Promise((resolve, reject) => {
         request({url: url, qs: qs}, (err: Error, resp, body) => {
@@ -211,7 +233,7 @@ export function sendOrderBinance(query, signature) {
     return new Promise((resolve, reject) => {
         request({
             'method': 'POST',
-            'url': 'https://api.binance.com/api/v3/order/test' + '?' + query + '&signature=' + signature, 
+            'url': 'https://api.binance.com/api/v3/order' + '?' + query + '&signature=' + signature, 
             'headers': {
                 'Content-type': 'application/x-www-form-urlencoded',
                 'X-MBX-APIKEY': config.GetString("BINANCE_API_KEY")

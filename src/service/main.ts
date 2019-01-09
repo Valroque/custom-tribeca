@@ -115,7 +115,7 @@ function ParseCurrencyPair(raw: string) : Models.CurrencyPair {
     return new Models.CurrencyPair(Models.Currency[split[0]], Models.Currency[split[1]]);
 }
 const pair = ParseCurrencyPair(config.GetString("TradedPair"));
-
+console.log("## PAIR ## : ",pair);
 const defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuotesActive(false, new Date(1));
 
 // SET THE DEFAULT QUOTING PARAMETERS, E.G. TBP, APR, pDiv, FV MODE, Quoting Mode, etc
