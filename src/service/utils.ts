@@ -258,3 +258,25 @@ export function createSignature(requestBody) {
     let signature = crypto.createHmac('sha256', config.GetString("BINANCE_SECRET_KEY")).update(query).digest('hex');
     return {query, signature}
 }
+
+export function sendPostRequest(url: string, data: {}) {
+    return new Promise( (resolve, reject) => {
+        request(
+            {
+                method: 'POST',
+                url: url,
+                headers: {
+                    'Authorization': 'Bearer ' + _authorizationBearer,
+                    'Content-Type': 'application/json'
+                },
+                json: data
+            },
+            (err, body, resp) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(resp);
+                }
+            });
+    })
+}

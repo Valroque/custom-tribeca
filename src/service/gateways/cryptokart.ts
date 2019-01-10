@@ -528,28 +528,6 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
 
-    sendPostRequest = (url: string, data: {}) => {
-        return new Promise( (resolve, reject) => {
-            request(
-                {
-                    method: 'POST',
-                    url: url,
-                    headers: {
-                        'Authorization': 'Bearer ' + this._authorizationBearer,
-                        'Content-Type': 'application/json'
-                    },
-                    json: data
-                },
-                (err, body, resp) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(resp);
-                    }
-                });
-        })
-    }
-
     // private readonly _tradesClient : SocketIOClient.Socket;
     private readonly _log = log("tribeca:gateway:CryptokartMD");
     private readonly _authorizationBearer : string;
@@ -584,7 +562,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
             ]
         }))
 
-        // this.sendPostRequest(url.resolve(config.GetString("CryptokartPullUrl"), "/matchengine/order/book"),{
+        // Utils.sendPostRequest(url.resolve(config.GetString("CryptokartPullUrl"), "/matchengine/order/book"),{
         //     "market_name" : this._symbolProvider.symbol,
         //     "side" : 2,
         //     "offset" : 0,
@@ -594,7 +572,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
         //     if (!data.error) {
         //         let ask = data.result.orders;
 
-        //         this.sendPostRequest(url.resolve(config.GetString("CryptokartPullUrl"), "/matchengine/order/book"),{
+        //         Utils.sendPostRequest(url.resolve(config.GetString("CryptokartPullUrl"), "/matchengine/order/book"),{
         //             "market_name" : this._symbolProvider.symbol,
         //             "side" : 1,
         //             "offset" : 0,
@@ -621,7 +599,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
         //     throw err;
         // })
 
-        // this.sendPostRequest(url.resolve(config.GetString("CryptokartPullUrl"), "/matchengine/order/finished"),{
+        // Utils.sendPostRequest(url.resolve(config.GetString("CryptokartPullUrl"), "/matchengine/order/finished"),{
         //     market_name : this._symbolProvider.symbol,
         //     start_time : 0,
         //     end_time : Math.round(Date.now()),
@@ -647,7 +625,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
         //     throw err;
         // })
 
-        // this.sendPostRequest(url.resolve(config.GetString("CryptokartPullUrl"), "/matchengine/order/finished"),{
+        // Utils.sendPostRequest(url.resolve(config.GetString("CryptokartPullUrl"), "/matchengine/order/finished"),{
         //     market_name : this._symbolProvider.symbol,
         //     start_time : 0,
         //     end_time : Math.round(Date.now()),
@@ -682,58 +660,20 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     public cancelsByClientOrderId = true;
     
-    sendPostRequest = (url: string, data: {}) => {
-        return new Promise( (resolve, reject) => {
-            request(
-                {
-                    method: 'POST',
-                    url: url,
-                    headers: {
-                        'Authorization': 'Bearer ' + this._authorizationBearer,
-                        'Content-Type': 'application/json'
-                    },
-                    json: data
-                },
-                (err, body, resp) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(resp);
-                    }
-                });
-        })
-    }
-
     supportsCancelAllOpenOrders = () : boolean => { return true; };
 
-    cancelAllOpenOrders = () : Q.Promise<number> => { return Q(2); };
-        // () : (Error | )=> {
-        //     var d = Q.defer<number>();
-        //     this._authClient.cancelAllOrders((err, resp) => {
-        //         if (err) d.reject(err);
-        //         else  {
-        //             var t = this._timeProvider.utcNow();
-        //             for (let cxl_id of resp) {
-        //                 this.OrderUpdate.trigger({
-        //                     exchangeId: cxl_id,
-        //                     time: t,
-        //                     orderStatus: Models.OrderStatus.Cancelled,
-        //                     leavesQuantity: 0
-        //                 });
-        //             }
-
-        //             d.resolve(resp.length);
-        //         };
-        //     });
-        //     return d.promise;
-        // }
+    cancelAllOpenOrders = async () => { 
+        const cancelAllUrl = new Config.ConfigProvider().GetString("CryptokartPullUrl") + '/matchengine/order/cancelAll';
+        const cancelAllResponse = await Utils.sendPostRequest(cancelAllUrl,{}).catch(err => console.error("\nERROR while Cancelling Open Orders : ",err));
+        console.log("\n## CANCEL ALL RESPONSE : ",cancelAllResponse);
+    };
 
     _nonce = 1;
 
     cancelOrder = (cancel : Models.OrderStatusReport) => {
 
         console.log("## testing cancel order : ", cancel);
-        this.sendPostRequest('https://test.cryptokart.io:1337/matchengine/order/cancel', {
+        Utils.sendPostRequest('https://test.cryptokart.io:1337/matchengine/order/cancel', {
             "market_name" : this._symbolProvider.symbol,
             "order_id" : parseInt(cancel.orderId)
         })
@@ -798,7 +738,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         let finalOrderId : number;
 
         // order ID is returned to be saved, updated by the tribeca for its internal use. It is used to replace the existing alphanumeric ID which tribeca uses ( which we can't work with )
-        // return this.sendPostRequest(url, finalOrderToSend)
+        // return Utils.sendPostRequest(url, finalOrderToSend)
         // .then( (data: {error,result}) => {
         //     if(!data.error) {
         //         console.log('Order Sent:', data);
@@ -816,7 +756,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         let sendPostResult;
 
         try {
-            sendPostResult = await this.sendPostRequest(url, finalOrderToSend);
+            sendPostResult = await Utils.sendPostRequest(url, finalOrderToSend);
         }
         catch (e) {
             console.log("\n## sendPostError in cryptokart.ts");
@@ -1047,7 +987,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
                  // Delay is added since the subsequent API couldn't fetch the deals record related to that order even though the order update was specificed by the sockets.
                  await Utils.delay(100);    
-                 const orderDealData = await this.sendPostRequest(this.cryptokartTradeEngineUrl,orderDealReqObj).catch((err) => {
+                 const orderDealData = await Utils.sendPostRequest(this.cryptokartTradeEngineUrl,orderDealReqObj).catch((err) => {
                      console.error("\nERROR in orderDealData Fetch : ",err);
                      return;
                  });
@@ -1073,7 +1013,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                          }
 
                          // Fetch the USER who placed the order which got matched with bot's order
-                         const orderFinishedData = await this.sendPostRequest(this.cryptokartTradeEngineUrl, orderFinishedDataReqObj).catch((err) => {
+                         const orderFinishedData = await Utils.sendPostRequest(this.cryptokartTradeEngineUrl, orderFinishedDataReqObj).catch((err) => {
                              console.error("\nERROR in orderFinishedData Fetch : ",err);
                              return;
                          });

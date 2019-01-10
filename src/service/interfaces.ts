@@ -41,7 +41,7 @@ export interface IOrderEntryGateway extends IGateway {
     generateClientOrderId(): string;
     
     supportsCancelAllOpenOrders() : boolean;
-    cancelAllOpenOrders() : q.Promise<number>;
+    cancelAllOpenOrders();
 }
 
 export interface IPositionGateway {
