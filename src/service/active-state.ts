@@ -48,8 +48,8 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
 
         _exchangeConnectivity.ConnectChanged.on(() => {
             console.log("\n## EXCHANGE CONNECTIVITY STATUS CHANGE IN ACTIVE-STATE.TS...");
-            this.updateParameters()}
-            );
+            this.updateParameters()
+        });
     }
 
     private handleNewQuotingModeChangeRequest = (v: boolean) => {
@@ -64,7 +64,7 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
     };
 
     private reevaluateQuotingMode = (): boolean => {
-        console.log("\n## active-state.ts reevaluateQuotingMode : this._exchangeConnectivity.connectStatus : ",this._exchangeConnectivity.connectStatus);
+        //console.log("\n## active-state.ts reevaluateQuotingMode : this._exchangeConnectivity.connectStatus : ",this._exchangeConnectivity.connectStatus);
         if (this._exchangeConnectivity.connectStatus !== Models.ConnectivityStatus.Connected) return false;
         return this._savedQuotingMode;
     };

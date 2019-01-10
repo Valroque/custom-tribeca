@@ -40,20 +40,20 @@ export class MarketFiltration {
             return;
         }
 
-        console.log("\n## MKT : ", mkt);
+        //console.log("\n## MKT : ", mkt);
 
         var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
         var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
 
         this.latestFilteredMarket = new Models.Market(bid, ask, mkt.time);
 
-        console.log("\n## market-filteration.ts filterFullMarket : ",this.latestFilteredMarket);
+        //console.log("\n## market-filteration.ts filterFullMarket : ",this.latestFilteredMarket);
     };
 
     private filterMarket = (mkts: Models.MarketSide[], s: Models.Side): Models.MarketSide[]=> {
         var rgq = this._quoter.quotesSent(s);
 
-        console.log("\n## rgq : ",rgq);
+        //console.log("\n## rgq : ",rgq);
 
         var copiedMkts = [];
         for (var i = 0; i < mkts.length; i++) {
