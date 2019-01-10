@@ -1085,7 +1085,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                              const binanceRequestObject = {
                                 'newClientOrderId': orderData[1].id+'',
                                 'side': orderData[1].side === 2 ? 'SELL' : 'BUY',
-                                'symbol': 'BTCUSDT',
+                                'symbol': this.marketPair,
                                 'quantity': +rec.amount,
                                 'type': 'MARKET',
                                 'timestamp': new Date().getTime()
@@ -1204,7 +1204,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             id: 6569,
             method: 'order.subscribe',
             params: [
-                'BCHUSDT'
+                this.marketPair
                 ]
             }
         ))
