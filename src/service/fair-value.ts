@@ -74,7 +74,7 @@ export class FairValueEngine {
          * We are resetting the socket every 10hrs...
          */
         Utils.delay(2000).then(this.initiateBinanceOrderbook);
-        setInterval(this.initiateBinanceOrderbook,+this.config.GetString("BinanceSocketResetHours") * 1000)
+        setInterval(this.initiateBinanceOrderbook,+this.config.GetString("BinanceSocketResetHours") * 60 * 60 * 1000)
 
         /**
          * Socket connection for the HitBTc Order book and fair value calculation
