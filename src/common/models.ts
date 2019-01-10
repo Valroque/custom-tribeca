@@ -291,6 +291,7 @@ export function currencyPairEqual(a: CurrencyPair, b: CurrencyPair): boolean {
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Depth }
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Off, EwmaBasic }
+export enum FairValueSource { Cryptokart, Binance }
 
 export class QuotingParameters {
     constructor(public width: number,
@@ -308,7 +309,8 @@ export class QuotingParameters {
                 public shortEwma: number,
                 public quotingEwma: number,
                 public aprMultiplier: number,
-                public stepOverSize: number) {}
+                public stepOverSize: number,
+                public fairValueSource: FairValueSource) {}
 }
 
 export function toUtcFormattedTime(t: moment.Moment | Date) {

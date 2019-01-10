@@ -65,14 +65,16 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     availableQuotingModes = [];
     availableFvModels = [];
     availableAutoPositionModes = [];
+    availableFairValueSources = [];
 
     constructor(sub: Messaging.ISubscribe<Models.QuotingParameters>,
         fire: Messaging.IFire<Models.QuotingParameters>) {
-        super(new Models.QuotingParameters(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null), sub, fire);
+        super(new Models.QuotingParameters(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null), sub, fire);
 
         this.availableQuotingModes = DisplayQuotingParameters.getMapping(Models.QuotingMode);
         this.availableFvModels = DisplayQuotingParameters.getMapping(Models.FairValueModel);
         this.availableAutoPositionModes = DisplayQuotingParameters.getMapping(Models.AutoPositionMode);
+        this.availableFairValueSources = DisplayQuotingParameters.getMapping(Models.FairValueSource);
     }
 
     private static getMapping<T>(enumObject: T) {

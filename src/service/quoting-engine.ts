@@ -80,7 +80,7 @@ export class QuotingEngine {
         const input = new QuoteInput(filteredMkt, fv, params, minTick);
         const unrounded = this._registry.Get(params.mode).GenerateQuote(input);
 
-        console.log("\n## computeQuote : unrounded 1: ",unrounded);
+        //console.log("\n## computeQuote : unrounded 1: ",unrounded);
         
         if (unrounded === null)
             return null;
@@ -95,7 +95,7 @@ export class QuotingEngine {
             }
         }
 
-        console.log("\n## computeQuote : unrounded 2: ",unrounded);
+        //console.log("\n## computeQuote : unrounded 2: ",unrounded);
 
         const tbp = this._targetPosition.latestTargetPosition;
         if (tbp === null) {
@@ -114,10 +114,10 @@ export class QuotingEngine {
                 unrounded.bidSz = Math.min(params.aprMultiplier*params.size, targetBasePosition - totalBasePosition);
         }
         
-        console.log("\n## latestPosition : ",latestPosition);
-        console.log("## totalBasePosition : ",totalBasePosition);
-        console.log("## targetBasePosition : ",targetBasePosition);
-        console.log("## params.positionDivergence : ", params.positionDivergence);
+        // console.log("\n## latestPosition : ",latestPosition);
+        // console.log("## totalBasePosition : ",totalBasePosition);
+        // console.log("## targetBasePosition : ",targetBasePosition);
+        // console.log("## params.positionDivergence : ", params.positionDivergence);
 
         if (totalBasePosition > targetBasePosition + params.positionDivergence) {
             unrounded.bidPx = null;
@@ -126,7 +126,7 @@ export class QuotingEngine {
                 unrounded.askSz = Math.min(params.aprMultiplier*params.size, totalBasePosition - targetBasePosition);
         }
 
-        console.log("\n## computeQuote : unrounded 3: ",unrounded);
+        //console.log("\n## computeQuote : unrounded 3: ",unrounded);
         
         const safety = this._safeties.latest;
         if (safety === null) {
@@ -140,56 +140,56 @@ export class QuotingEngine {
             unrounded.bidPx = safety.sellPong - params.width;
         }
 
-        console.log("\n## computeQuote : unrounded 4: ",unrounded);
+        //console.log("\n## computeQuote : unrounded 4: ",unrounded);
         
         if (safety.sell > params.tradesPerMinute) {
             unrounded.askPx = null;
             unrounded.askSz = null;
         }
 
-        console.log("\n## computeQuote : unrounded 5: ",unrounded);
+        //console.log("\n## computeQuote : unrounded 5: ",unrounded);
 
         if (safety.buy > params.tradesPerMinute) {
             unrounded.bidPx = null;
             unrounded.bidSz = null;
         }
 
-        console.log("\n## computeQuote : unrounded 6: ",unrounded);
+        //console.log("\n## computeQuote : unrounded 6: ",unrounded);
         
         if (unrounded.bidPx !== null) {
             unrounded.bidPx = Utils.roundSide(unrounded.bidPx, minTick, Models.Side.Bid);
             unrounded.bidPx = Math.max(0, unrounded.bidPx);
         }
 
-        console.log("\n## computeQuote : unrounded 7: ",unrounded);
+        //console.log("\n## computeQuote : unrounded 7: ",unrounded);
         
         if (unrounded.askPx !== null) {
             unrounded.askPx = Utils.roundSide(unrounded.askPx, minTick, Models.Side.Ask);
             unrounded.askPx = Math.max(unrounded.bidPx + minTick, unrounded.askPx);
         }
 
-        console.log("\n## computeQuote : unrounded 8: ",unrounded);
+        //console.log("\n## computeQuote : unrounded 8: ",unrounded);
         
         if (unrounded.askSz !== null) {
             unrounded.askSz = Utils.roundDown(unrounded.askSz, minTick);
             unrounded.askSz = Math.max(minTick, unrounded.askSz);
         }
 
-        console.log("\n## computeQuote : unrounded 9: ",unrounded);
+        //console.log("\n## computeQuote : unrounded 9: ",unrounded);
         
         if (unrounded.bidSz !== null) {
             unrounded.bidSz = Utils.roundDown(unrounded.bidSz, minTick);
             unrounded.bidSz = Math.max(minTick, unrounded.bidSz);
         }
 
-        console.log("## quoting-engine.ts computeQuote : ", unrounded);
+        //console.log("## quoting-engine.ts computeQuote : ", unrounded);
         return unrounded;
     }
 
     private recalcQuote = (t: Date) => {
         const fv = this._fvEngine.latestFairValue;
 
-        console.log("## quoting-engine.ts recalcQuote : fv : ",fv);
+        //console.log("## quoting-engine.ts recalcQuote : fv : ",fv);
         if (fv == null) {
             this.latestQuote = null;
             return;

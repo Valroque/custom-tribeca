@@ -52,6 +52,9 @@ export class FairValueEngine {
     private bidBinance: Models.MarketSide[] = [];
 
     private marketPair;
+    private binanceTimer;
+    private cryptokartTimer;
+    private initialTimer;
 
     constructor(
         private _details: Interfaces.IBroker,
@@ -62,6 +65,7 @@ export class FairValueEngine {
         private _fvPersister: Persister.IPersist<Models.FairValue>) {
         this.config = new ConfigProvider();
         this.marketPair = this.config.GetString("TradedPair").split("/").join("");
+        this.initialTimer = setInterval(() => {this.recalcFairValue(_timeProvider.utcNow())}, 1000); 
 
         this.askHitBtc = [];
         this.bidHitBtc = [];
@@ -73,14 +77,72 @@ export class FairValueEngine {
          * Initiate this socket connection every 24hrs since Binance disconnects the existing socket after every 24hrs of it's establishment
          * We are resetting the socket every 10hrs...
          */
-        Utils.delay(2000).then(this.initiateBinanceOrderbook);
-        setInterval(this.initiateBinanceOrderbook,+this.config.GetString("BinanceSocketResetHours") * 60 * 60 * 1000)
+        //Utils.delay(2000).then(this.initiateBinanceOrderbook);
+        //this.binanceTimer = setInterval(this.initiateBinanceOrderbook,+this.config.GetString("BinanceSocketResetHours") * 60 * 60 * 1000)
 
         /**
          * Socket connection for the HitBTc Order book and fair value calculation
          */
         //this.hitBtcOrderBookSocket = new Utils.WebSoc('wss://api.hitbtc.com/api/2/ws', this.recalcFairValueHitBtc, this.onHitBtcSocket);
+        
+        _qlParamRepo.NewParameters.on(() => {
+            const source = this._qlParamRepo.latest.fairValueSource;
 
+            switch(source) {
+                case 0:
+                    console.log("\n Changing Fair Value Source to Cryptokart...");
+
+                    try {
+                        clearInterval(this.initialTimer);
+                    } catch (e) {
+                        console.log("\nCould Not Clear Initial Timer");
+                    }
+
+                    try {
+                        clearInterval(this.binanceTimer);
+                    } catch (e) {
+                        console.log("\nCould Not Clear Binance Timer");
+                    }
+
+                    try {
+                        this.binanceOrderBookSocket.socket.close();
+                    } catch (e) {
+                        console.error("\nError Closing Binance Socket : ",e);
+                    }
+
+                    try {
+                        this.hitBtcOrderBookSocket.socket.close();
+                    } catch (e) {
+                        console.error("\nError Closing HitBtc Socket : ",e);
+                    }
+
+                    this.cryptokartTimer = setInterval(() => {this.recalcFairValue(_timeProvider.utcNow())}, 1000); 
+                    console.log("\n Fair Value Source Changed to Cryptokart...");
+                    break;
+                case 1:
+                    console.log("\n Changing the Fair Value Source to Binance...");
+
+                    try {
+                        clearInterval(this.initialTimer);
+                    } catch (e) {
+                        console.log("\nCould Not Clear Initial Timer");
+                    }
+
+                    try {
+                        clearInterval(this.cryptokartTimer);
+                    } catch (e) {
+                        console.error("\nError Closing Cryptokart Timer : ",e);
+                    }
+
+                    Utils.delay(1000).then(this.initiateBinanceOrderbook);
+                    this.binanceTimer = setInterval(this.initiateBinanceOrderbook,+this.config.GetString("BinanceSocketResetHours") * 60 * 60 * 1000)
+                    console.log("\n Fair Value Source Changed to Binance...");
+                    break;
+                default:
+                    console.log("\nRandom Source : ",source);
+            }
+            
+        })
     }
 
     /**
@@ -176,6 +238,7 @@ export class FairValueEngine {
         }
 
         var fv = new Models.FairValue(this.ComputeFV(ask[0], bid[0], this._qlParamRepo.latest.fvModel), t);
+        console.log("\n*** NEW FV CRYPTOKART : ",fv);
         this.latestFairValue = fv;
     };
 
@@ -361,7 +424,7 @@ export class FairValueEngine {
                 this.bidBinance = this.bidBinance.slice(0,10);
 
                 var fv = new Models.FairValue(this.ComputeFV(this.askBinance[0], this.bidBinance[0], this._qlParamRepo.latest.fvModel), this._timeProvider.utcNow());
-                console.log("\n*** NEW FV : ",fv);
+                console.log("\n*** NEW FV BINANCE : ",fv);
                 this.latestFairValue = fv;
                 break;
             default:

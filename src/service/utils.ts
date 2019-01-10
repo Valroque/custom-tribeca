@@ -153,7 +153,7 @@ export class WebSoc {
     }
 
     private onClose = (event) => {
-        console.log("Socket Connection Closed : ",event);
+        console.log("Socket Connection Closed ");
     }
 
     private onMessage = (event) => {

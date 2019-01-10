@@ -120,7 +120,7 @@ const defaultActive : Models.SerializedQuotesActive = new Models.SerializedQuote
 
 // SET THE DEFAULT QUOTING PARAMETERS, E.G. TBP, APR, pDiv, FV MODE, Quoting Mode, etc
 const defaultQuotingParameters : Models.QuotingParameters = new Models.QuotingParameters(.3, .05, Models.QuotingMode.Top, 
-    Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300, .095, 2*.095, .095, 3, .1);
+    Models.FairValueModel.BBO, 3, .8, false, Models.AutoPositionMode.Off, false, 2.5, 300, .095, 2*.095, .095, 3, .1, Models.FairValueSource.Cryptokart);
 
 const backTestSimulationSetup = (inputData : Array<Models.Market | Models.MarketTrade>, parameters : Backtest.BacktestParameters) : SimulationClasses => {
     const timeProvider : Utils.ITimeProvider = new Backtest.BacktestTimeProvider(moment(_.first(inputData).time), moment(_.last(inputData).time));

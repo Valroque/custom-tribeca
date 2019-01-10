@@ -54,7 +54,7 @@ export class SafetyCalculator {
     private onTrade = (ut: Models.Trade) => {
         var u = _.cloneDeep(ut);
 
-        console.log("## safety.ts onTrade u : ",u);
+        //console.log("## safety.ts onTrade u : ",u);
         if (this.isOlderThan(u, this._repo.latest)) return;
 
         if (u.side === Models.Side.Ask) {
@@ -98,7 +98,7 @@ export class SafetyCalculator {
         if (buyPq) buyPing /= buyPq;
         if (sellPq) sellPong /= sellPq;
 
-        console.log("\n## safety.ts computeQtyLimit this._buys, this._sells : ",this._buys, this._sells);
+        //console.log("\n## safety.ts computeQtyLimit this._buys, this._sells : ",this._buys, this._sells);
 
         var orderTrades = (input: Models.Trade[], direction: number): Models.Trade[]=> {
             return _.chain(input)
@@ -132,13 +132,13 @@ export class SafetyCalculator {
             }
         }
 
-        console.log("\n## safety.ts computeQtyLimit this._buys, this._sells : ",this._buys, this._sells);
+        //console.log("\n## safety.ts computeQtyLimit this._buys, this._sells : ",this._buys, this._sells);
 
         var computeSafety = (t: Models.Trade[]) => t.reduce((sum, t) => sum + t.quantity, 0) / this._qlParams.latest.size;
 
         this.latest = new Models.TradeSafety(computeSafety(this._buys), computeSafety(this._sells),
             computeSafety(this._buys.concat(this._sells)), buyPing, sellPong, this._timeProvider.utcNow());
 
-        console.log("\n## safety.ts computeQtyLimit this.latest : ", this.latest);
+        //console.log("\n## safety.ts computeQtyLimit this.latest : ", this.latest);
     };
 }

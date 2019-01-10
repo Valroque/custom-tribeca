@@ -183,6 +183,7 @@
                             <table class="table table-responsive table-bordered">
                                 <thead>
                                     <tr class="active">
+                                        <th>FV Source</th>
                                         <th>mode</th>
                                         <th>fv</th>
                                         <th>apMode</th>
@@ -209,6 +210,11 @@
                                 </thead>
                                 <tbody>
                                     <tr class="active">
+                                        <td>
+                                            <select class="form-control input-sm"
+                                                ng-model="pair.quotingParameters.display.fairValueSource"
+                                                ng-options="x.val as x.str for x in pair.quotingParameters.availableFairValueSources"></select>
+                                        </td>
                                         <td>
                                             <select class="form-control input-sm"
                                                 ng-model="pair.quotingParameters.display.mode"
