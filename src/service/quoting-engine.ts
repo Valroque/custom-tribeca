@@ -77,6 +77,7 @@ export class QuotingEngine {
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
         const params = this._qlParamRepo.latest;
         const minTick = this._details.minTickIncrement;
+        console.log("\n ## filteredMkt in Quoting Engine : ",filteredMkt);
         const input = new QuoteInput(filteredMkt, fv, params, minTick);
         //console.log("\n ## INPUT : ",input);
         const unrounded = this._registry.Get(params.mode).GenerateQuote(input);

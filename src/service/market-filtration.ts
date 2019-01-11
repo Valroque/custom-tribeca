@@ -34,20 +34,19 @@ export class MarketFiltration {
     private filterFullMarket = () => {
         var mkt = this._broker.currentBook;
 
-
         if (mkt == null || mkt.bids.length < 1 || mkt.asks.length < 1) {
             this.latestFilteredMarket = null;
             return;
         }
 
-        //console.log("\n## MKT : ", mkt);
+        console.log("\n## MKT : ", mkt);
 
         var ask = this.filterMarket(mkt.asks, Models.Side.Ask);
         var bid = this.filterMarket(mkt.bids, Models.Side.Bid);
 
         this.latestFilteredMarket = new Models.Market(bid, ask, mkt.time);
 
-        //console.log("\n## market-filteration.ts filterFullMarket : ",this.latestFilteredMarket);
+        console.log("\n## market-filteration.ts filterFullMarket : ",this.latestFilteredMarket);
     };
 
     private filterMarket = (mkts: Models.MarketSide[], s: Models.Side): Models.MarketSide[]=> {
