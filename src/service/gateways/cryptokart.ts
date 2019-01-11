@@ -1022,8 +1022,8 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                          // check whether that USER doesn't belong to Cryptokart's Accounts
                          if(!_.includes(this.cryptokartAccounts, orderFinishedData['result']['user'])) {
 
-                             const binanceRequestObject = {
-                                'newClientOrderId': orderData[1].id+'',
+                            const binanceRequestObject = {
+                                'newClientOrderId': orderData[1].id + '',
                                 'side': orderData[1].side === 2 ? 'SELL' : 'BUY',
                                 'symbol': this.marketPair,
                                 'quantity': +rec.amount,
@@ -1045,9 +1045,9 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                                     "orderId": 28,
                                     "clientOrderId": "6gCrw2kRUAF9CvJDGP16IP",
                                     "transactTime": 1507725176595,
-                                    "price": "1.00000000",
+                                    "price": "4000.00000000",
                                     "origQty": "10.00000000",
-                                    "executedQty": "10.00000000",
+                                    "executedQty": "0.500000000",
                                     "cummulativeQuoteQty": "10.00000000",
                                     "status": "FILLED",
                                     "timeInForce": "GTC",
@@ -1086,6 +1086,49 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                                     }
                                     ]
                                 }
+
+                                /**
+                                 * Profit Calculation for Cryptokart
+                                 */
+
+                                let profitData = {};
+                                const totalQuoteAmount = +rec.price * +rec.amount;
+                                const totalCommissionBinance = binanceResponse.fills.reduce((commission,deal) => commission += +deal.commission,0);
+                                let totalQuoteAmountBinance;
+                                let finalQuoteAmount;
+                                let profitPercentage;
+
+                                switch(orderData[1].side) {
+                                    case 2: // when bot places a buy order, binance places a sell order
+
+                                        totalQuoteAmountBinance = +binanceResponse.price * +binanceResponse.executedQty - totalCommissionBinance;
+                                        finalQuoteAmount = totalQuoteAmountBinance - totalQuoteAmount;
+                                        profitPercentage = (totalQuoteAmountBinance - totalQuoteAmount) * 100 / totalQuoteAmount;
+                                        break;
+                                    
+                                    case 1: 
+                                        /**
+                                         * when bot places a sell order, binance places a buy order of the same quantity.
+                                         * But that quantity is reduced by the commission charged by the Binance.
+                                         * Therefore, the totalQuoteAmounts are calculated as it is with the original quantity and a "0.1%" of loss is considered from the final profit percentage
+                                         */
+                                        totalQuoteAmountBinance = +binanceResponse.price * +binanceResponse.executedQty;
+                                        finalQuoteAmount = totalQuoteAmount - totalQuoteAmountBinance;
+                                        profitPercentage = ((totalQuoteAmount - totalQuoteAmountBinance) * 100 / totalQuoteAmount) - 0.1; // 0.1 is the percentage loss considered here
+                                        break;
+                                }
+
+                                profitData = {
+                                    'totalCryptokart': totalQuoteAmount,
+                                    'totalCommissionBinance': totalCommissionBinance,
+                                    'totalBinance': totalQuoteAmountBinance,
+                                    'profit': finalQuoteAmount,
+                                    'profitPercentage': profitPercentage
+                                }
+
+                                binanceResponse['profitData'] = profitData;
+
+                                console.log(binanceResponse);
 
                                 // save it in DB
                                 const binanceCollection = await this.mongoBinance.connectToCollection();
@@ -1243,7 +1286,8 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
     // ============================================= SOCKET TEST ===============================================//
     private readonly _positionUpdateClient = new ws(this.updatePositionData); // needs the update function inside
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
-    
+    private baseSymbol;
+    private quoteSymbol;
 
     private readonly _apiKey : string;
     private readonly _secret : string;
@@ -1254,6 +1298,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
         this._secret = config.GetString("CryptokartSecret");
         this._pullUrl = config.GetString("CryptokartPullUrl");
         this._authorizationBearer = config.GetString("AuthorizationBearer");
+        [this.baseSymbol,this.quoteSymbol] = config.GetString("TradedPair").split("/");
 
         // this function fetches the initial position status via a http call. the subsequent ones are fetched via a socket subscription.
         //this.onTick();
@@ -1265,7 +1310,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
             id: 12021,
             method: 'asset.subscribe',
             params: [
-                'BCH','USDT'
+                this.baseSymbol,this.quoteSymbol
             ]
         }))
     }
@@ -1347,7 +1392,6 @@ export async function createCryptokart(config: Config.IConfigProvider, orders: I
         let symbols = await Utils.postJSON<CryptokartMarketList>(symbolsUrl);
 
         console.log("## inside createCryptokart...");
-        console.log("\n## SYMBOLS RESULT : ",symbols.result);
         
         if (symbols.result) {
             const symbolProvider = new CryptokartSymbolProvider(pair);

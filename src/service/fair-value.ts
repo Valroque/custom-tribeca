@@ -54,7 +54,11 @@ export class FairValueEngine {
     private marketPair;
     private binanceTimer;
     private cryptokartTimer;
-    private initialTimer;
+    /**
+     * 1. Cryptokart is the default source if no params found persisting in the DB
+     * 2. Else, the persisted value of the FV source will be used
+     */
+    private currentFairValueSource; // initial source of fv calculation
 
     constructor(
         private _details: Interfaces.IBroker,
@@ -65,11 +69,19 @@ export class FairValueEngine {
         private _fvPersister: Persister.IPersist<Models.FairValue>) {
         this.config = new ConfigProvider();
         this.marketPair = this.config.GetString("TradedPair").split("/").join("");
-        this.initialTimer = setInterval(() => {this.recalcFairValue(_timeProvider.utcNow())}, 1000); 
 
-        this.askHitBtc = [];
-        this.bidHitBtc = [];
-        //_qlParamRepo.NewParameters.on(() => this.recalcFairValue(_timeProvider.utcNow()));
+        this.currentFairValueSource = _qlParamRepo.latest.fairValueSource;
+        if(this.currentFairValueSource == Models.FairValueSource.Cryptokart) {
+            console.log("\n == INITIALIZING FAIR VALUE FROM CRYPTOKART ORDERBOOK ==\n");
+            this.cryptokartTimer = setInterval(() => {this.recalcFairValue(_timeProvider.utcNow())}, 1000);
+        } else if(this.currentFairValueSource == Models.FairValueSource.Binance) {
+            console.log("\n == INITIALIZING FAIR VALUE FROM BINANCE ORDERBOOK ==\n");
+            Utils.delay(1000).then(this.initiateBinanceOrderbook);
+            this.binanceTimer = setInterval(this.initiateBinanceOrderbook,+this.config.GetString("BinanceSocketResetHours") * 60 * 60 * 1000)
+        }
+
+        //this.askHitBtc = [];
+        //this.bidHitBtc = [];
         //_filtration.FilteredMarketChanged.on(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket, _timeProvider)));
         _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
 
@@ -88,58 +100,50 @@ export class FairValueEngine {
         _qlParamRepo.NewParameters.on(() => {
             const source = this._qlParamRepo.latest.fairValueSource;
 
-            switch(source) {
-                case 0:
-                    console.log("\n Changing Fair Value Source to Cryptokart...");
+            if(this.currentFairValueSource !== source) {
+                switch(source) {
+                    case 0:
+                        console.log("\n Changing Fair Value Source to Cryptokart...");
+    
+                        try {
+                            clearInterval(this.binanceTimer);
+                        } catch (e) {
+                            console.log("\nCould Not Clear Binance Timer : ", e);
+                        }
+    
+                        try {
+                            this.binanceOrderBookSocket.socket.close();
+                        } catch (e) {
+                            console.error("\nError Closing Binance Socket : ",e);
+                        }
+    
+                        try {
+                            this.hitBtcOrderBookSocket.socket.close();
+                        } catch (e) {
+                            console.error("\nError Closing HitBtc Socket : ",e);
+                        }
+    
+                        this.cryptokartTimer = setInterval(() => {this.recalcFairValue(_timeProvider.utcNow())}, 1000); 
+                        this.currentFairValueSource = source;
+                        console.log("\n Fair Value Source Changed to Cryptokart...");
+                        break;
+                    case 1:
+                        console.log("\n Changing the Fair Value Source to Binance...");
 
-                    try {
-                        clearInterval(this.initialTimer);
-                    } catch (e) {
-                        console.log("\nCould Not Clear Initial Timer");
-                    }
-
-                    try {
-                        clearInterval(this.binanceTimer);
-                    } catch (e) {
-                        console.log("\nCould Not Clear Binance Timer");
-                    }
-
-                    try {
-                        this.binanceOrderBookSocket.socket.close();
-                    } catch (e) {
-                        console.error("\nError Closing Binance Socket : ",e);
-                    }
-
-                    try {
-                        this.hitBtcOrderBookSocket.socket.close();
-                    } catch (e) {
-                        console.error("\nError Closing HitBtc Socket : ",e);
-                    }
-
-                    this.cryptokartTimer = setInterval(() => {this.recalcFairValue(_timeProvider.utcNow())}, 1000); 
-                    console.log("\n Fair Value Source Changed to Cryptokart...");
-                    break;
-                case 1:
-                    console.log("\n Changing the Fair Value Source to Binance...");
-
-                    try {
-                        clearInterval(this.initialTimer);
-                    } catch (e) {
-                        console.log("\nCould Not Clear Initial Timer");
-                    }
-
-                    try {
-                        clearInterval(this.cryptokartTimer);
-                    } catch (e) {
-                        console.error("\nError Closing Cryptokart Timer : ",e);
-                    }
-
-                    Utils.delay(1000).then(this.initiateBinanceOrderbook);
-                    this.binanceTimer = setInterval(this.initiateBinanceOrderbook,+this.config.GetString("BinanceSocketResetHours") * 60 * 60 * 1000)
-                    console.log("\n Fair Value Source Changed to Binance...");
-                    break;
-                default:
-                    console.log("\nRandom Source : ",source);
+                        try {
+                            clearInterval(this.cryptokartTimer);
+                        } catch (e) {
+                            console.error("\nError Closing Cryptokart Timer : ", e);
+                        }
+    
+                        Utils.delay(1000).then(this.initiateBinanceOrderbook);
+                        this.binanceTimer = setInterval(this.initiateBinanceOrderbook,+this.config.GetString("BinanceSocketResetHours") * 60 * 60 * 1000)
+                        this.currentFairValueSource = source;
+                        console.log("\n Fair Value Source Changed to Binance...");
+                        break;
+                    default:
+                        console.log("\nRandom Source : ",source);
+                }
             }
             
         })
