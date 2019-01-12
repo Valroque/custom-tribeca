@@ -203,6 +203,12 @@ export class QuotingEngine {
             return;
         }
 
+        /**
+         * handled the case when filtered market bids,asks are empty, leading to crash of tribeca when the default modes try to calculate quotes.
+         * Tribeca assumes that there exists a top quote...
+         */
+        if(filteredMkt.asks.length < 1 || filteredMkt.bids.length < 1) return; 
+
         const genQt = this.computeQuote(filteredMkt, fv);
 
         if (genQt === null) {

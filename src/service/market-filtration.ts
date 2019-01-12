@@ -52,7 +52,7 @@ export class MarketFiltration {
     private filterMarket = (mkts: Models.MarketSide[], s: Models.Side): Models.MarketSide[]=> {
         var rgq = this._quoter.quotesSent(s);
 
-        //console.log("\n## rgq : ",rgq);
+        console.log("\n## rgq : ",rgq);
 
         var copiedMkts = [];
         for (var i = 0; i < mkts.length; i++) {

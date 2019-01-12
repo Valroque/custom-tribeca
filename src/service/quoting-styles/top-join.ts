@@ -43,6 +43,10 @@ export class JoinQuoteStyle implements StyleHelpers.QuoteStyle {
     };
 }
 
+/**
+ * need to handle the case when the input arrays contains no elements....
+ * tribeca assumes that top level exists...
+ */
 function getQuoteAtTopOfMarket(input: StyleHelpers.QuoteInput): StyleHelpers.GeneratedQuote {
     var topBid = (input.market.bids[0].size > input.params.stepOverSize ? input.market.bids[0] : input.market.bids[1]);
     if (typeof topBid === "undefined") topBid = input.market.bids[0]; // only guaranteed top level exists
