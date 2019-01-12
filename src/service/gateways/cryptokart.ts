@@ -465,8 +465,8 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
 
             console.log('\n## Partial Order Book Built : \n', this.bidsArray, this.asksArray);
             this.MarketData.trigger(new Models.Market(this.bidsArray, this.asksArray, new Date()));
-            this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         }
+        this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         // console.log(this.MarketData);
     }
 
@@ -1013,10 +1013,14 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                          }
 
                          // Fetch the USER who placed the order which got matched with bot's order
-                         const orderFinishedData = await Utils.sendPostRequest(this.cryptokartTradeEngineUrl, orderFinishedDataReqObj).catch((err) => {
-                             console.error("\nERROR in orderFinishedData Fetch : ",err);
-                             return;
-                         });
+                         let orderFinishedData;
+                         try {
+                            orderFinishedData = await Utils.sendPostRequest(this.cryptokartTradeEngineUrl, orderFinishedDataReqObj);
+                         } catch (e) {
+                            console.error("\nERROR in orderFinishedData Fetch : ",e);
+                            return;
+                         }
+
                          console.log("\n## ORDER FINISHED DATA : ",orderFinishedData);
 
                          // check whether that USER doesn't belong to Cryptokart's Accounts

@@ -32,6 +32,7 @@ import moment = require('moment');
 import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import {QuoteInput} from "./quoting-styles/helpers";
 import log from "./logging";
+import { clearInterval } from "timers";
 
 export class QuotingEngine {
     private _log = log("quotingengine");
@@ -49,6 +50,13 @@ export class QuotingEngine {
         this._quotePublisher.publish(this._latest);
     }
 
+    private recalcQuotesTimer;
+    private currentQuotingMode = [];
+    private marketPair;
+    private binanceOrderBook: Models.Market;
+    private binanceTimer;
+    private recalcBinanceTimer;
+
     constructor(
         private _registry: QuotingStyleRegistry.QuotingStyleRegistry,
         private _timeProvider: Utils.ITimeProvider,
@@ -62,16 +70,62 @@ export class QuotingEngine {
         private _ewma: Interfaces.IEwmaCalculator,
         private _targetPosition: PositionManagement.TargetBasePositionManager,
         private _safeties: Safety.SafetyCalculator) {
-        var recalcWithoutInputTime = () => this.recalcQuote(_timeProvider.utcNow());
 
-        _filteredMarkets.FilteredMarketChanged.on(m => this.recalcQuote(Utils.timeOrDefault(m, _timeProvider)));
-        _qlParamRepo.NewParameters.on(recalcWithoutInputTime);
-        _orderBroker.Trade.on(recalcWithoutInputTime);
-        _ewma.Updated.on(recalcWithoutInputTime);
+        this.marketPair = new Config.ConfigProvider().GetString("TradedPair").split("/").join("");
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
-        _targetPosition.NewTargetPosition.on(recalcWithoutInputTime);
-        _safeties.NewValue.on(recalcWithoutInputTime);        
-        _timeProvider.setInterval(recalcWithoutInputTime, moment.duration(1, "seconds"));
+
+        this.decideAndCalculateQuote(_qlParamRepo.latest.mode);
+        _qlParamRepo.NewParameters.on(() => this.decideAndCalculateQuote(_qlParamRepo.latest.mode))
+    }
+
+    private recalcWithoutInputTime = () => this.recalcQuote(this._timeProvider.utcNow());
+    private recalcWithoutInputTimeBinance = () => this.recalcQuoteBinance(this._timeProvider.utcNow());
+
+    private decideAndCalculateQuote(quotingMode: Models.QuotingMode) {
+        
+        if(!_.includes(this.currentQuotingMode,quotingMode)) {
+            switch(quotingMode) {
+                case Models.QuotingMode.BinanceQuote:
+
+                    console.log("\n == CHANGING THE QUOTING MODE TO BINANCE .. ");
+                    this._filteredMarkets.FilteredMarketChanged.off(m => this.recalcQuote(Utils.timeOrDefault(m, this._timeProvider)));
+                    this._ewma.Updated.off(this.recalcWithoutInputTime);
+                    this._targetPosition.NewTargetPosition.off(this.recalcWithoutInputTime);
+                    this._safeties.NewValue.off(this.recalcWithoutInputTime);        
+                    this._orderBroker.Trade.off(this.recalcWithoutInputTime);
+                    clearInterval(this.recalcQuotesTimer);
+
+                    this._targetPosition.NewTargetPosition.on(this.recalcWithoutInputTimeBinance);
+                    this.callRecalcBinanceRandom();
+                    this.currentQuotingMode = [Models.QuotingMode.BinanceQuote];
+                    console.log("\n == CHANGED THE QUOTING MODE TO BINANCE == ");
+                    break;
+
+                default:
+                    console.log("\n == CHANGING THE QUOTING MODE TO DEFAULTS .. ");
+
+                    this._targetPosition.NewTargetPosition.off(this.recalcWithoutInputTimeBinance);
+                    clearTimeout(this.binanceTimer);                        
+
+                    this._filteredMarkets.FilteredMarketChanged.on(m => this.recalcQuote(Utils.timeOrDefault(m, this._timeProvider)));
+                    this._ewma.Updated.on(this.recalcWithoutInputTime);
+                    this._targetPosition.NewTargetPosition.on(this.recalcWithoutInputTime);
+                    this._safeties.NewValue.on(this.recalcWithoutInputTime);        
+                    this._orderBroker.Trade.on(this.recalcWithoutInputTime);
+                    this.recalcQuotesTimer = this._timeProvider.setInterval(this.recalcWithoutInputTime, moment.duration(1, "seconds"));
+                    this.currentQuotingMode = [Models.QuotingMode.Depth, Models.QuotingMode.InverseJoin, Models.QuotingMode.InverseTop, Models.QuotingMode.Join, Models.QuotingMode.Mid, Models.QuotingMode.PingPong, Models.QuotingMode.Top];
+                    console.log("\n == CHANGED THE QUOTING MODE TO DEFAULTS == ");
+                    break;    
+            }
+        }
+
+    }
+
+    private callRecalcBinanceRandom() {
+        this.binanceTimer = setTimeout(() => {
+            this.recalcQuoteBinance(this._timeProvider.utcNow());
+            this.callRecalcBinanceRandom();
+        },Math.random() * 5000)
     }
 
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
@@ -224,6 +278,44 @@ export class QuotingEngine {
 
         console.log("## quoting-engine.ts recalcQuote : latestQuote : ",this.latestQuote);
     };
+
+    private recalcQuoteBinance = async (t: Date) => {
+        let orderBook;
+        try {
+            orderBook = await Utils.getJSON(`https://www.binance.com/api/v1/depth?symbol=${this.marketPair}&limit=10`)
+        } catch (e) {
+            console.log("\nERROR FETCHING BINANCE ORDERBOOK FOR QUOTE-ENGINE : ",e);
+            return;
+        }
+
+        let askBinance: Models.MarketSide[] = [];
+        let bidBinance: Models.MarketSide[] = [];
+
+        orderBook['bids'].forEach((order) => {
+            bidBinance.push(new Models.MarketSide(Number(order[0]), Number(order[1])));
+        })
+        orderBook['asks'].forEach((order) => {
+            askBinance.push(new Models.MarketSide(Number(order[0]), Number(order[1])));
+        })
+
+        this.binanceOrderBook = new Models.Market(bidBinance, askBinance, this._timeProvider.utcNow());
+
+        const fv = this._fvEngine.latestFairValue;
+        const genQt = this.computeQuote(this.binanceOrderBook, fv);
+
+        if (genQt === null) {
+            this.latestQuote = null;
+            return;
+        }
+
+        this.latestQuote = new Models.TwoSidedQuote(
+            this.quotesAreSame(new Models.Quote(genQt.bidPx, genQt.bidSz), this.latestQuote, Models.Side.Bid),
+            this.quotesAreSame(new Models.Quote(genQt.askPx, genQt.askSz), this.latestQuote, Models.Side.Ask),
+            t
+            );
+
+        console.log("## quoting-engine.ts recalcQuote : latestQuote : ",this.latestQuote);
+    }
 
     private quotesAreSame(
             newQ: Models.Quote, 

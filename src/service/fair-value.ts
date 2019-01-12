@@ -157,7 +157,7 @@ export class FairValueEngine {
      * 4. Then set up the socket connection for getting the updates related to change in the orderbook
      */
     private initiateBinanceOrderbook = () => {
-        Utils.getJSON(`https://www.binance.com/api/v1/depth?symbol=${this.marketPair}&limit=10`)
+        Utils.getJSON(`https://www.binance.com/api/v1/depth?symbol=${this.marketPair}&limit=1000`)
         .then((binanceOrderBook) => {
 
             this.askBinance = [];
@@ -175,7 +175,7 @@ export class FairValueEngine {
             //console.log(this.askBinance);
             //console.log(this.bidBinance);
 
-            this.binanceOrderBookSocket = new Utils.WebSoc(`wss://stream.binance.com:9443/ws/${this.marketPair.toLowerCase()}@depth10`, this.recalcFairValueBinance, this.onBinanceSocket);
+            this.binanceOrderBookSocket = new Utils.WebSoc(`wss://stream.binance.com:9443/ws/${this.marketPair.toLowerCase()}@depth`, this.recalcFairValueBinance, this.onBinanceSocket);
 
         })
         .catch((err) => {
@@ -424,8 +424,12 @@ export class FairValueEngine {
                     })
                 }
 
-                this.askBinance = this.askBinance.slice(0,10);
-                this.bidBinance = this.bidBinance.slice(0,10);
+                this.askBinance = this.askBinance//.slice(0,100);
+                this.bidBinance = this.bidBinance//.slice(0,100);
+
+                console.log("\n BINANCE ORDERBOOK DATA DURING FAIR VALUE : \n");
+                console.log(this.askBinance.slice(0,10));
+                console.log(this.bidBinance.slice(0,10));
 
                 var fv = new Models.FairValue(this.ComputeFV(this.askBinance[0], this.bidBinance[0], this._qlParamRepo.latest.fvModel), this._timeProvider.utcNow());
                 console.log("\n*** NEW FV BINANCE : ",fv);

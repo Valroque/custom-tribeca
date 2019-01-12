@@ -81,9 +81,9 @@ export class QuoteSender {
         var askStatus = Models.QuoteStatus.Held;
         var bidStatus = Models.QuoteStatus.Held;
 
-        console.log("\n quote-senter.ts sendQuote : quote : ",quote);
-        console.log("## quote-sender.ts sendQuote : this._activeRepo.latest : ",this._activeRepo.latest);
-        console.log("## quote-sender.ts sendQuote : this._activeRepo : ",this._activeRepo);
+        //console.log("\n quote-senter.ts sendQuote : quote : ",quote);
+        //console.log("## quote-sender.ts sendQuote : this._activeRepo.latest : ",this._activeRepo.latest);
+        //console.log("## quote-sender.ts sendQuote : this._activeRepo : ",this._activeRepo);
 
         if (quote !== null && this._activeRepo.latest) {
             if (quote.ask !== null && this.hasEnoughPosition(this._details.pair.base, quote.ask.size) &&
@@ -132,7 +132,7 @@ export class QuoteSender {
 
     private hasEnoughPosition = (cur: Models.Currency, minAmt: number): boolean => {
         var pos = this._positionBroker.getPosition(cur);
-        console.log("## quote-sender.ts hasEnoughPosition : ",pos != null && pos.amount > minAmt);
+        //console.log("## quote-sender.ts hasEnoughPosition : ",pos != null && pos.amount > minAmt);
         return pos != null && pos.amount > minAmt;
     };
 }

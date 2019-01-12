@@ -288,7 +288,7 @@ export function currencyPairEqual(a: CurrencyPair, b: CurrencyPair): boolean {
     return a.base === b.base && a.quote === b.quote;
 }
 
-export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Depth }
+export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, PingPong, Depth, BinanceQuote }
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Off, EwmaBasic }
 export enum FairValueSource { Cryptokart, Binance }

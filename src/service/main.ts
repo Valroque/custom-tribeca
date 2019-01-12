@@ -66,6 +66,7 @@ import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import MidMarket = require("./quoting-styles/mid-market");
 import TopJoin = require("./quoting-styles/top-join");
 import Depth = require("./quoting-styles/depth");
+import Binance = require("./quoting-styles/binanceQuote");
 
 const serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001";
 
@@ -385,7 +386,8 @@ const runTradingSystem = async (classes: SimulationClasses) : Promise<void> => {
         new TopJoin.JoinQuoteStyle(),
         new TopJoin.TopOfTheMarketQuoteStyle(),
         new TopJoin.PingPongQuoteStyle(),
-        new Depth.DepthQuoteStyle()
+        new Depth.DepthQuoteStyle(),
+        new Binance.BinanceQuote()
     ]);
 
     const positionMgr = new PositionManagement.PositionManager(broker, timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
