@@ -90,11 +90,11 @@ export class QuotingEngine {
                 case Models.QuotingMode.BinanceQuote:
 
                     console.log("\n == CHANGING THE QUOTING MODE TO BINANCE .. ");
-                    this._filteredMarkets.FilteredMarketChanged.off(m => this.recalcQuote(Utils.timeOrDefault(m, this._timeProvider)));
-                    this._ewma.Updated.off(this.recalcWithoutInputTime);
-                    this._targetPosition.NewTargetPosition.off(this.recalcWithoutInputTime);
-                    this._safeties.NewValue.off(this.recalcWithoutInputTime);        
-                    this._orderBroker.Trade.off(this.recalcWithoutInputTime);
+                    //this._filteredMarkets.FilteredMarketChanged.off(m => this.recalcQuote(Utils.timeOrDefault(m, this._timeProvider)));
+                    // this._ewma.Updated.off(this.recalcWithoutInputTime);
+                    // this._targetPosition.NewTargetPosition.off(this.recalcWithoutInputTime);
+                    // this._safeties.NewValue.off(this.recalcWithoutInputTime);        
+                    // this._orderBroker.Trade.off(this.recalcWithoutInputTime);
                     clearInterval(this.recalcQuotesTimer);
 
                     //this._targetPosition.NewTargetPosition.on(this.recalcWithoutInputTimeBinance);
@@ -109,11 +109,11 @@ export class QuotingEngine {
                     //this._targetPosition.NewTargetPosition.off(this.recalcWithoutInputTimeBinance);
                     clearTimeout(this.binanceTimer);                        
 
-                    this._filteredMarkets.FilteredMarketChanged.on(m => this.recalcQuote(Utils.timeOrDefault(m, this._timeProvider)));
-                    this._ewma.Updated.on(this.recalcWithoutInputTime);
-                    this._targetPosition.NewTargetPosition.on(this.recalcWithoutInputTime);
-                    this._safeties.NewValue.on(this.recalcWithoutInputTime);        
-                    this._orderBroker.Trade.on(this.recalcWithoutInputTime);
+                    //this._filteredMarkets.FilteredMarketChanged.on(m => this.recalcQuote(Utils.timeOrDefault(m, this._timeProvider)));
+                    // this._ewma.Updated.on(this.recalcWithoutInputTime);
+                    // this._targetPosition.NewTargetPosition.on(this.recalcWithoutInputTime);
+                    // this._safeties.NewValue.on(this.recalcWithoutInputTime);        
+                    // this._orderBroker.Trade.on(this.recalcWithoutInputTime);
                     this.recalcQuotesTimer = this._timeProvider.setInterval(this.recalcWithoutInputTime, moment.duration(1, "seconds"));
                     this.currentQuotingMode = [Models.QuotingMode.Depth, Models.QuotingMode.InverseJoin, Models.QuotingMode.InverseTop, Models.QuotingMode.Join, Models.QuotingMode.Mid, Models.QuotingMode.PingPong, Models.QuotingMode.Top];
                     console.log("\n == CHANGED THE QUOTING MODE TO DEFAULTS == ");
