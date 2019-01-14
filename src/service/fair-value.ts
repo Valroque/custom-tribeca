@@ -25,6 +25,7 @@ import MarketFiltration = require("./market-filtration");
 import QuotingParameters = require("./quoting-parameters");
 import moment = require("moment");
 import { ConfigProvider } from "./config";
+import { BinanceOrderBookManager } from "./binanceOrderBook";
 
 export class FairValueEngine {
     public FairValueChanged = new Utils.Evt<Models.FairValue>();
@@ -66,7 +67,8 @@ export class FairValueEngine {
         private _filtration: MarketFiltration.MarketFiltration,
         private _qlParamRepo: QuotingParameters.QuotingParametersRepository, // should not co-mingle these settings
         private _fvPublisher: Messaging.IPublish<Models.FairValue>,
-        private _fvPersister: Persister.IPersist<Models.FairValue>) {
+        private _fvPersister: Persister.IPersist<Models.FairValue>,
+        private _binanceOB: BinanceOrderBookManager) {
         this.config = new ConfigProvider();
         this.marketPair = this.config.GetString("TradedPair").split("/").join("");
 
@@ -76,21 +78,12 @@ export class FairValueEngine {
             this.cryptokartTimer = setInterval(() => {this.recalcFairValue(_timeProvider.utcNow())}, 1000);
         } else if(this.currentFairValueSource == Models.FairValueSource.Binance) {
             console.log("\n == INITIALIZING FAIR VALUE FROM BINANCE ORDERBOOK ==\n");
-            Utils.delay(1000).then(this.initiateBinanceOrderbook);
-            this.binanceTimer = setInterval(this.initiateBinanceOrderbook,+this.config.GetString("BinanceSocketResetHours") * 60 * 60 * 1000)
+            this.binanceTimer = setInterval(() => {this.recalcFairValueBinance()}, 1000);
         }
 
-        //this.askHitBtc = [];
-        //this.bidHitBtc = [];
         //_filtration.FilteredMarketChanged.on(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket, _timeProvider)));
         _fvPublisher.registerSnapshot(() => this.latestFairValue === null ? [] : [this.latestFairValue]);
 
-        /**
-         * Initiate this socket connection every 24hrs since Binance disconnects the existing socket after every 24hrs of it's establishment
-         * We are resetting the socket every 10hrs...
-         */
-        //Utils.delay(2000).then(this.initiateBinanceOrderbook);
-        //this.binanceTimer = setInterval(this.initiateBinanceOrderbook,+this.config.GetString("BinanceSocketResetHours") * 60 * 60 * 1000)
 
         /**
          * Socket connection for the HitBTc Order book and fair value calculation
@@ -112,18 +105,13 @@ export class FairValueEngine {
                         }
     
                         try {
-                            this.binanceOrderBookSocket.socket.close();
-                        } catch (e) {
-                            console.error("\nError Closing Binance Socket : ",e);
-                        }
-    
-                        try {
                             this.hitBtcOrderBookSocket.socket.close();
                         } catch (e) {
                             console.error("\nError Closing HitBtc Socket : ",e);
                         }
     
-                        this.cryptokartTimer = setInterval(() => {this.recalcFairValue(_timeProvider.utcNow())}, 1000); 
+                        this.cryptokartTimer = setInterval(() => {this.recalcFairValue(_timeProvider.utcNow())}, 1000);
+                        //_filtration.FilteredMarketChanged.on(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket, _timeProvider)));
                         this.currentFairValueSource = source;
                         console.log("\n Fair Value Source Changed to Cryptokart...");
                         break;
@@ -135,9 +123,9 @@ export class FairValueEngine {
                         } catch (e) {
                             console.error("\nError Closing Cryptokart Timer : ", e);
                         }
-    
-                        Utils.delay(1000).then(this.initiateBinanceOrderbook);
-                        this.binanceTimer = setInterval(this.initiateBinanceOrderbook,+this.config.GetString("BinanceSocketResetHours") * 60 * 60 * 1000)
+
+                        //_filtration.FilteredMarketChanged.off(() => this.recalcFairValue(Utils.timeOrDefault(_filtration.latestFilteredMarket, _timeProvider)));
+                        this.binanceTimer = setInterval(() => {this.recalcFairValueBinance()}, 1000);
                         this.currentFairValueSource = source;
                         console.log("\n Fair Value Source Changed to Binance...");
                         break;
@@ -149,68 +137,7 @@ export class FairValueEngine {
         })
     }
 
-    /**
-     * Steps to Calculate Fair Value from Binance
-     * 1. Fetch the Snapshot of the Orderbook
-     * 2. Symbol = BTCUSDT, should be fetched from the config file, i.e. traded pair
-     * 3. Limit = The number of rows/entries you need in the order book snapshot
-     * 4. Then set up the socket connection for getting the updates related to change in the orderbook
-     */
-    private initiateBinanceOrderbook = () => {
-        Utils.getJSON(`https://www.binance.com/api/v1/depth?symbol=${this.marketPair}&limit=1000`)
-        .then((binanceOrderBook) => {
-
-            this.askBinance = [];
-            this.bidBinance = [];
-
-            binanceOrderBook['bids'].forEach((order) => {
-                this.bidBinance.push(new Models.MarketSide(Number(order[0]), Number(order[1])));
-            })
-
-            binanceOrderBook['asks'].forEach((order) => {
-                this.askBinance.push(new Models.MarketSide(Number(order[0]), Number(order[1])));
-            })
-
-            console.log("\n == BINANCE SNAPSHOT Received via API ==\n");
-            //console.log(this.askBinance);
-            //console.log(this.bidBinance);
-
-            this.binanceOrderBookSocket = new Utils.WebSoc(`wss://stream.binance.com:9443/ws/${this.marketPair.toLowerCase()}@depth`, this.recalcFairValueBinance, this.onBinanceSocket);
-
-        })
-        .catch((err) => {
-            console.error("\nERROR while Fetching Snapshot of Binance Orderbook : ",err);
-            console.log("\nTRYING TO FETCH THE BINANCE ORDER BOOK AGAIN IN 2 SECONDS...");
-            Utils.delay(2000).then(this.initiateBinanceOrderbook);
-        })
-    }
-
-    private onHitBtcSocket = () => {
-        this.hitBtcOrderBookSocket.socket.send(JSON.stringify({
-            "method": "login",
-            "params": {
-              "algo": "BASIC",
-              "pKey": "86fff2e276517e282255de7045ee5f08",
-              "sKey": "609be53f69cfa98d16f7d10757dde91f"
-            }
-          }))
-
-        setTimeout(()=> {
-            this.hitBtcOrderBookSocket.socket.send(JSON.stringify({
-                "method": "subscribeOrderbook",
-                "params": {
-                  "symbol": "BTCUSD",
-                  "limit": 50
-                },
-              "id": 123
-              }))
-        },5000)
-    }
-
-    private onBinanceSocket = (event) => {
-        console.log("\n== BINANCE SOCKET CONNECTION ESTABLISHED/RESTORED : ",event.type);
-    }
-
+    
     private static ComputeFVUnrounded(ask: Models.MarketSide, bid: Models.MarketSide, model: Models.FairValueModel) {
         switch (model) {
             case Models.FairValueModel.BBO:
@@ -247,6 +174,28 @@ export class FairValueEngine {
     };
 
     // ===================== LOGIC TO CALCULATE FAIR VALUE FROM HITBTC ============================//
+    private onHitBtcSocket = () => {
+        this.hitBtcOrderBookSocket.socket.send(JSON.stringify({
+            "method": "login",
+            "params": {
+              "algo": "BASIC",
+              "pKey": "86fff2e276517e282255de7045ee5f08",
+              "sKey": "609be53f69cfa98d16f7d10757dde91f"
+            }
+          }))
+
+        setTimeout(()=> {
+            this.hitBtcOrderBookSocket.socket.send(JSON.stringify({
+                "method": "subscribeOrderbook",
+                "params": {
+                  "symbol": "BTCUSD",
+                  "limit": 50
+                },
+              "id": 123
+              }))
+        },5000)
+    }
+
     private askHitBtc : Models.MarketSide[];
     private bidHitBtc : Models.MarketSide[];
 
@@ -364,80 +313,12 @@ export class FairValueEngine {
     // ============================================================================================//
 
 
-    private recalcFairValueBinance = (event) => {
-        const orderBookUpdate = JSON.parse(event.data);
-
-        switch(event.type) {
-            case 'message':
-                if(orderBookUpdate.hasOwnProperty('asks')) {
-                    orderBookUpdate.asks.forEach((order) => {
-                        let askArrayUpdated = false;
-
-                        for(let ask in this.askBinance) {
-                            if(Number(order[0]) == this.askBinance[ask].price) {
-                                this.askBinance[ask].size = Number(order[1]);
-                                askArrayUpdated = true;
-                                break;
-                            }
-                        }
-
-                        if(!askArrayUpdated) {
-                            this.askBinance.push(new Models.MarketSide(Number(order[0]), Number(order[1])));
-                        }
-
-                        this.askBinance = this.askBinance.filter(ask => ask.size > 0);
-                        this.askBinance.sort((a,b) => {
-                            if(a.price < b.price) {
-                                return -1;
-                            } else if(a.price > b.price) {
-                                return 1;
-                            } return 0;
-                        })
-
-                    })
-                }
-
-                if(orderBookUpdate.hasOwnProperty('bids')) {
-                    orderBookUpdate.bids.forEach((order) => {
-                        let bidArrayUpdated = false;
-
-                        for(let bid in this.bidBinance) {
-                            if(Number(order[0]) == this.bidBinance[bid].price) {
-                                this.bidBinance[bid].size = Number(order[1]);
-                                bidArrayUpdated = true;
-                                break;
-                            }
-                        }
-
-                        if(!bidArrayUpdated) {
-                            this.bidBinance.push(new Models.MarketSide(Number(order[0]), Number(order[1])));
-                        }
-
-                        this.bidBinance = this.bidBinance.filter(bid => bid.size > 0);
-                        this.bidBinance.sort((a,b) => {
-                            if(a.price < b.price) {
-                                return 1;
-                            } else if(a.price > b.price) {
-                                return -1;
-                            } return 0;
-                        })
-                    })
-                }
-
-                this.askBinance = this.askBinance//.slice(0,100);
-                this.bidBinance = this.bidBinance//.slice(0,100);
-
-                console.log("\n BINANCE ORDERBOOK DATA DURING FAIR VALUE : \n");
-                console.log(this.askBinance.slice(0,10));
-                console.log(this.bidBinance.slice(0,10));
-
-                var fv = new Models.FairValue(this.ComputeFV(this.askBinance[0], this.bidBinance[0], this._qlParamRepo.latest.fvModel), this._timeProvider.utcNow());
-                console.log("\n*** NEW FV BINANCE : ",fv);
-                this.latestFairValue = fv;
-                break;
-            default:
-                console.log("\nUnknown Data From Binance Socket : ",event);
-                break;
-        }
+    private recalcFairValueBinance = () => {
+        const bestBinance = this._binanceOB.getBest();
+        const askB = new Models.MarketSide(parseFloat(bestBinance.ask.price), parseFloat(bestBinance.ask.size));
+        const bidB = new Models.MarketSide(parseFloat(bestBinance.bid.price), parseFloat(bestBinance.ask.size));
+        var fv = new Models.FairValue(this.ComputeFV(askB, bidB, this._qlParamRepo.latest.fvModel), this._timeProvider.utcNow());
+        console.log("\n*** NEW FV BINANCE : ",fv);
+        this.latestFairValue = fv;                
     }
 }

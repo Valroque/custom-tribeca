@@ -50,6 +50,7 @@ import Safety = require("./safety");
 import compression = require("compression");
 import Persister = require("./persister");
 import Active = require("./active-state");
+import BinanceManager = require('./binanceOrderBook');
 import FairValue = require("./fair-value");
 import Web = require("./web");
 import Promises = require("./promises");
@@ -67,6 +68,7 @@ import MidMarket = require("./quoting-styles/mid-market");
 import TopJoin = require("./quoting-styles/top-join");
 import Depth = require("./quoting-styles/depth");
 import Binance = require("./quoting-styles/binanceQuote");
+
 
 const serverUrl = 'BACKTEST_SERVER_URL' in process.env ? process.env['BACKTEST_SERVER_URL'] : "http://localhost:5001";
 
@@ -333,6 +335,7 @@ const runTradingSystem = async (classes: SimulationClasses) : Promise<void> => {
         hasSelfTradePrevention: broker.hasSelfTradePrevention,
     }, "using the following exchange details");
 
+    const binanceOrderbookManager = new BinanceManager.BinanceOrderBookManager(config);
     const orderBroker = new Broker.OrderBroker(timeProvider, broker, gateway.oe, orderPersister, tradesPersister, orderStatusPublisher, tradePublisher, submitOrderReceiver, cancelOrderReceiver, cancelAllOrdersReceiver, messages, orderCache, initOrders, initTrades, shouldPublishAllOrders);
     const marketDataBroker = new Broker.MarketDataBroker(timeProvider, gateway.md, marketDataPublisher, marketDataPersister, messages);
     const positionBroker = new Broker.PositionBroker(timeProvider, broker, gateway.pg, positionPublisher, positionPersister, marketDataBroker);
@@ -370,7 +373,7 @@ const runTradingSystem = async (classes: SimulationClasses) : Promise<void> => {
 
     const quoter = new Quoter.Quoter(orderBroker, broker);
     const filtration = new MarketFiltration.MarketFiltration(broker, new Utils.ImmediateActionScheduler(timeProvider), quoter, marketDataBroker);
-    const fvEngine = new FairValue.FairValueEngine(broker, timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister);
+    const fvEngine = new FairValue.FairValueEngine(broker, timeProvider, filtration, paramsRepo, fvPublisher, fairValuePersister, binanceOrderbookManager);
     const ewma = new Statistics.ObservableEWMACalculator(timeProvider, fvEngine, initParams.quotingEwma);
 
     const rfvValues = _.map(initRfv, (r: Models.RegularFairValue) => r.value);
@@ -393,7 +396,7 @@ const runTradingSystem = async (classes: SimulationClasses) : Promise<void> => {
     const positionMgr = new PositionManagement.PositionManager(broker, timeProvider, rfvPersister, fvEngine, initRfv, shortEwma, longEwma);
     const tbp = new PositionManagement.TargetBasePositionManager(timeProvider, positionMgr, paramsRepo, positionBroker, targetBasePositionPublisher, tbpPersister);
     const quotingEngine = new QuotingEngine.QuotingEngine(registry, timeProvider, filtration, fvEngine, paramsRepo, quotePublisher,
-        orderBroker, positionBroker, broker, ewma, tbp, safetyCalculator);
+        orderBroker, positionBroker, broker, ewma, tbp, safetyCalculator, binanceOrderbookManager);
     const quoteSender = new QuoteSender.QuoteSender(timeProvider, quotingEngine, quoteStatusPublisher, quoter, active, positionBroker, fvEngine, marketDataBroker, broker);
 
     const marketTradeBroker = new MarketTrades.MarketTradeBroker(gateway.md, marketTradePublisher, marketDataBroker,

@@ -1307,7 +1307,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
         // this function fetches the initial position status via a http call. the subsequent ones are fetched via a socket subscription.
         //this.onTick();
         setInterval(this.onTick, 15000);
-        setTimeout(this.onTick, 15000);
+        //setTimeout(this.onTick, 15000);
 
         // socket for the assets query
         this._positionUpdateClient.socket.customSend(JSON.stringify({

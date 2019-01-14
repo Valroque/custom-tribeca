@@ -139,29 +139,31 @@ export class ImmediateActionScheduler implements IActionScheduler {
 
 export class WebSoc {
     public socket;
+    private aboutSocket;
 
-    constructor(url, onMessage?, onOpen?, onClose?, onError?) {
+    constructor(url, options: {onMessage?, onError?, onOpen?, onClose?, socketInfo?: string}) {
         this.socket = new WebSocket(url, {rejectUnauthorized: false});
-        this.socket.onopen = onOpen || this.onOpen;
-        this.socket.onclose = onClose || this.onClose;
-        this.socket.onmessage = onMessage || this.onMessage;
-        this.socket.onerror = onError || this.onError;
+        this.socket.onopen = options.onOpen || this.onOpen;
+        this.socket.onclose = options.onClose || this.onClose;
+        this.socket.onmessage = options.onMessage || this.onMessage;
+        this.socket.onerror = options.onError || this.onError;
+        this.aboutSocket = options.socketInfo || "No Info Available";
     }
 
     private onOpen = (event) => {
-        console.log("Socket Connection Open : ",event);
+        console.log(`\n=== Socket <${this.aboutSocket}> Connection Open ===`);
     }
 
     private onClose = (event) => {
-        console.log("Socket Connection Closed ");
+        console.log(`\n=== Socket <${this.aboutSocket}> Connection Closed ===`);
     }
 
     private onMessage = (event) => {
-        console.log("Socket Message Received : ",event);
+        console.log(`\n=== Socket <${this.aboutSocket}> Message Received ===`, JSON.parse(event.data));
     }
 
     private onError = (event) => {
-        console.log("Socket Error : ",event);
+        console.log(`\n=== Socket <${this.aboutSocket}> Error ===`, event);
     }
 }
 

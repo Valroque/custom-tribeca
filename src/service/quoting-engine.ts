@@ -33,6 +33,7 @@ import QuotingStyleRegistry = require("./quoting-styles/style-registry");
 import {QuoteInput} from "./quoting-styles/helpers";
 import log from "./logging";
 import { clearInterval } from "timers";
+import { BinanceOrderBookManager } from "./binanceOrderBook";
 
 export class QuotingEngine {
     private _log = log("quotingengine");
@@ -69,7 +70,8 @@ export class QuotingEngine {
         private _details: Interfaces.IBroker,
         private _ewma: Interfaces.IEwmaCalculator,
         private _targetPosition: PositionManagement.TargetBasePositionManager,
-        private _safeties: Safety.SafetyCalculator) {
+        private _safeties: Safety.SafetyCalculator,
+        private _binanceOB: BinanceOrderBookManager) {
 
         this.marketPair = new Config.ConfigProvider().GetString("TradedPair").split("/").join("");
         _quotePublisher.registerSnapshot(() => this.latestQuote === null ? [] : [this.latestQuote]);
@@ -95,7 +97,7 @@ export class QuotingEngine {
                     this._orderBroker.Trade.off(this.recalcWithoutInputTime);
                     clearInterval(this.recalcQuotesTimer);
 
-                    this._targetPosition.NewTargetPosition.on(this.recalcWithoutInputTimeBinance);
+                    //this._targetPosition.NewTargetPosition.on(this.recalcWithoutInputTimeBinance);
                     this.callRecalcBinanceRandom();
                     this.currentQuotingMode = [Models.QuotingMode.BinanceQuote];
                     console.log("\n == CHANGED THE QUOTING MODE TO BINANCE == ");
@@ -104,7 +106,7 @@ export class QuotingEngine {
                 default:
                     console.log("\n == CHANGING THE QUOTING MODE TO DEFAULTS .. ");
 
-                    this._targetPosition.NewTargetPosition.off(this.recalcWithoutInputTimeBinance);
+                    //this._targetPosition.NewTargetPosition.off(this.recalcWithoutInputTimeBinance);
                     clearTimeout(this.binanceTimer);                        
 
                     this._filteredMarkets.FilteredMarketChanged.on(m => this.recalcQuote(Utils.timeOrDefault(m, this._timeProvider)));
@@ -131,7 +133,7 @@ export class QuotingEngine {
     private computeQuote(filteredMkt: Models.Market, fv: Models.FairValue) {
         const params = this._qlParamRepo.latest;
         const minTick = this._details.minTickIncrement;
-        console.log("\n ## filteredMkt in Quoting Engine : ",filteredMkt);
+        //console.log("\n ## filteredMkt in Quoting Engine : ",filteredMkt);
         const input = new QuoteInput(filteredMkt, fv, params, minTick);
         //console.log("\n ## INPUT : ",input);
         const unrounded = this._registry.Get(params.mode).GenerateQuote(input);
@@ -280,23 +282,23 @@ export class QuotingEngine {
     };
 
     private recalcQuoteBinance = async (t: Date) => {
-        let orderBook;
-        try {
-            orderBook = await Utils.getJSON(`https://www.binance.com/api/v1/depth?symbol=${this.marketPair}&limit=10`)
-        } catch (e) {
-            console.log("\nERROR FETCHING BINANCE ORDERBOOK FOR QUOTE-ENGINE : ",e);
-            return;
-        }
+        
+        const orderBook = this._binanceOB.getOrderBook();
 
         let askBinance: Models.MarketSide[] = [];
         let bidBinance: Models.MarketSide[] = [];
 
-        orderBook['bids'].forEach((order) => {
-            bidBinance.push(new Models.MarketSide(Number(order[0]), Number(order[1])));
-        })
-        orderBook['asks'].forEach((order) => {
-            askBinance.push(new Models.MarketSide(Number(order[0]), Number(order[1])));
-        })
+        let totalBids = 0;
+        for(let price of Object.keys(orderBook.bids)) {
+            bidBinance.push(new Models.MarketSide(Number(price), Number(orderBook.bids[price])));
+            if(++totalBids == 10) break;
+        }
+
+        let totalAsks = 0;
+        for(let price of Object.keys(orderBook.asks)) {
+            askBinance.push(new Models.MarketSide(Number(price), Number(orderBook.asks[price])));
+            if(++totalAsks == 10) break;
+        }
 
         this.binanceOrderBook = new Models.Market(bidBinance, askBinance, this._timeProvider.utcNow());
 
