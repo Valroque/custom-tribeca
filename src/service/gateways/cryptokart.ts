@@ -35,7 +35,7 @@ class ws {
 
         this._authenticationBearer = this.config.GetString("AuthorizationBearer");
 
-        this.socket = new WebSocket("wss://test.cryptokart.io:453", {rejectUnauthorized: false});
+        this.socket = new WebSocket("ws://13.127.78.141:8090", {rejectUnauthorized: false});
 
         let onOpen = (event) => {
             console.log('Socket Connected');
