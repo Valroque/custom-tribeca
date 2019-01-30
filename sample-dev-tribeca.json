@@ -8,18 +8,18 @@
     "WebClientListenPort": "3000",
     "ShowAllOrders": "false",
 
-    "AuthorizationBearer": "6dMfggURMyg7vo09fKjwKhVpO6LbHWDxOsCapfqtW9PZN0VssDlhIntQHiT9h6IevKd5n0wANPCxP47FHLEWO82342CQ7ysjQD2nUN5s7ebVPKxqFClN4JW8sAjb4WJJOKfoLbGNiGihDV226SkrpBvGZ4SUgHG0NsL0KQqU4sTPy6ymP2LBkagkrAYGB1HgTaxnIUNI2UPqd2Y5cqTeqCYMKCZN2DnzBNqz1mfJX83kCjJGB9XLKg6jaegOh7e",
+    "AuthorizationBearer": "b0IyVltCzteqwHyehTbE6y58KFa0jcgOndgsk2oBLFLKsy5BgLUIetsWW6jW76oq6zDilNJuuPHv7N1Vwurepudqm8WMjdo3mxpQ9L9MuOSZIQcYEUXLAWfSquBHuXwSIztcNNBFi30jm046JeJ65kN6GEsHxALmnsdZOJPwhi2K9YINEwD9M5XoGneDR5q2auQppaUDJY79KVEaV06rvJTHqZObF58UUP1L3kDes2oMWr1LKtJRxqcb6FAavsy",
     "BINANCE_API_KEY": "fZdc4P1BQ9ZjBiGm21DYADZcR5blOZCxLJtujQqItYQMEYX8iZch1vUxR8v5dIPm",
     "BINANCE_SECRET_KEY": "PbDQnxKkR5fFb3ZWHsZIUI4XhwM9RqTCyOqsTB08lGRnYmCSsp13RD8pz0k3uvrP",
 
     "CryptokartPullUrl": "https://test.cryptokart.io:1337",
-    "CryptokartOrderEntryUrl": "wss://test.cryptokart.io:453",
-    "CryptokartMarketDataUrl": "wss://test.cryptokart.io:453",
+    "CryptokartOrderEntryUrl": "ws://13.127.78.141:8090",
+    "CryptokartMarketDataUrl": "ws://13.127.78.141:8090",
     "CryptokartSocketIoUrl": "https://api.hitbtc.com:8081",
     "CryptokartApiKey": "7AC8OHL3XD",
     "CryptokartSecret": "IUHIAxsBDQXomnFnOSaymoQlLwOKk0",
     "CryptokartOrderDestination": "Cryptokart",
-    "CryptokartTradeEngine": "http://test.cryptokart.io:8080",
+    "CryptokartTradeEngine": "http://13.127.78.141:8080",
     "CryptokartAccountIDs": [999,888],
 
     "BinanceSocketResetHours": "0.1",
@@ -31,20 +31,20 @@
     "HitBtcApiKey": "NULL",
     "HitBtcSecret": "NULL",
     "HitBtcOrderDestination": "HitBtc",
-    
+
     "CoinbaseRestUrl": "https://api.gdax.com",
     "CoinbaseWebsocketUrl": "wss://ws-feed.gdax.com",
     "CoinbasePassphrase": "NULL",
     "CoinbaseApiKey": "NULL",
     "CoinbaseSecret": "NULL",
     "CoinbaseOrderDestination": "Coinbase",
-    
+
     "OkCoinWsUrl": "wss://real.okcoin.com:10440/websocket/okcoinapi",
     "OkCoinHttpUrl": "https://www.okcoin.com/api/v1/",
     "OkCoinApiKey": "NULL",
     "OkCoinSecretKey": "NULL",
     "OkCoinOrderDestination": "OkCoin",
-    
+
     "BitfinexHttpUrl": "https://api.bitfinex.com/v1",
     "BitfinexKey": "NULL",
     "BitfinexSecret": "NULL",
