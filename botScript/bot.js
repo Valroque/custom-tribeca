@@ -1,11 +1,12 @@
 const RandomAmountDistribution = require('./randomAmount')
+const PlaceMarketOrder = require('./cryptokartTrade');
 
 const AMT_AVG = 100;
 const AVG_AMT_COIN = 0.0286;
 const COIN_PRICE = 3500;
 
-const INTERVAL_BEGIN_TIME = 2;
-const INTERVAL_END_TIME = 6;
+const INTERVAL_BEGIN_TIME = 1;
+const INTERVAL_END_TIME = 4;
 
 const PROBABILITY_DISTRIBUTION = [
     {
@@ -50,32 +51,36 @@ const PROBABILITY_DISTRIBUTION = [
     }
 ];
 
-/**
- * AMT_COINS - stores the actual amount of coins in an array depending on the multiple factor fixed.
- * PROBABILITY_COINS - stores the probabilities of the amount of coins in an array.
- */
-const AMT_COINS = PROBABILITY_DISTRIBUTION.map(distributionObject => +(distributionObject.multipleFactor*AVG_AMT_COIN).toFixed(8));
-const PROBABILITY_COINS = PROBABILITY_DISTRIBUTION.map(probabilityObject => +(probabilityObject.probability/100).toFixed(8))
-
 // INITIALIZE THE RANDOM COIN AMOUNT GENERATOR BASED ON THE PROBABILITY DISTRIBUTION
-const getRandomAmount = RandomAmountDistribution(AMT_COINS, PROBABILITY_COINS);
+// future addition - provide a delta to be added/subtracted from the random coin amt being generated..
+const getRandomAmount = RandomAmountDistribution(AVG_AMT_COIN, PROBABILITY_DISTRIBUTION);
 
+/**
+ * Market Side
+ * 1 - Sell
+ * 2 - Buy
+ */
+function getRandomMarketSide() {
+    return (parseInt(Math.random()*2)+1);
+}
 
 /**
  * 1. Logic to Trade
  * 2. Clearing the previous timeout
  * 3. Starting a new timeout with a random delay between the BEGIN and END time
  */
-const tradeNow = () => {
-    console.log(`TRADED on ${new Date()} Value : `, getRandomAmount());
-    clearTimeout(beginTradingInterval);
-    beginTradingInterval = setTimeout(tradeNow, (INTERVAL_BEGIN_TIME + (INTERVAL_END_TIME - INTERVAL_BEGIN_TIME)*Math.random()) * 1000);
+
+let tradingInterval;
+
+const tradeNow = async () => {
+    clearTimeout(tradingInterval);
+
+    const marketSide = getRandomMarketSide();
+    const coinAmt = getRandomAmount();
+
+    await PlaceMarketOrder(coinAmt, marketSide);
+   
+    tradingInterval = setTimeout(tradeNow, (INTERVAL_BEGIN_TIME + (INTERVAL_END_TIME - INTERVAL_BEGIN_TIME)*Math.random()) * 1000);
 }
 
-
-/**
- * BEGIN TRADING WITH INITIAL DELAY OF BEGIN TIME...
- */
-let beginTradingInterval = setTimeout(() => {
-    tradeNow();
-}, Math.random() * INTERVAL_BEGIN_TIME * 1000)
+tradeNow();
