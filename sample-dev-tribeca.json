@@ -15,12 +15,16 @@
     "CryptokartPullUrl": "https://test.cryptokart.io:1337",
     "CryptokartOrderEntryUrl": "ws://13.127.78.141:8090",
     "CryptokartMarketDataUrl": "ws://13.127.78.141:8090",
+    "CryptokartSocketUrl": "ws://13.127.78.141:8090",
     "CryptokartSocketIoUrl": "https://api.hitbtc.com:8081",
     "CryptokartApiKey": "7AC8OHL3XD",
     "CryptokartSecret": "IUHIAxsBDQXomnFnOSaymoQlLwOKk0",
     "CryptokartOrderDestination": "Cryptokart",
     "CryptokartTradeEngine": "http://13.127.78.141:8080",
     "CryptokartAccountIDs": [999,888],
+
+    "TribecaClientId" : "6c9590cb-ec13-4548-9bad-b591b344ddb3",
+    "TribecaClientSecret" : "9de06b78-a841-43e3-869f-9c501bc3036d",
 
     "BinanceSocketResetHours": "0.1",
 

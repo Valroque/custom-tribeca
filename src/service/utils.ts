@@ -16,6 +16,8 @@ require('events').EventEmitter.prototype._maxListeners = 100;
 
 const config = new Config.ConfigProvider();
 const _authorizationBearer: string = config.GetString("AuthorizationBearer");
+const _tribecaClientId: string = config.GetString("TribecaClientId");
+const _tribecaClientSecret: string = config.GetString("TribecaClientSecret");
 
 export const delay = ms => new Promise(res => setTimeout(res,ms));
 
@@ -262,13 +264,15 @@ export function createSignature(requestBody) {
 }
 
 export function sendPostRequest(url: string, data: {}) {
+    data['client_id'] = _tribecaClientId;
+    data['client_secret'] = _tribecaClientSecret;
     return new Promise( (resolve, reject) => {
         request(
             {
                 method: 'POST',
                 url: url,
                 headers: {
-                    'Authorization': 'Bearer ' + _authorizationBearer,
+                    // 'Authorization': 'Bearer ' + _authorizationBearer,
                     'Content-Type': 'application/json'
                 },
                 json: data

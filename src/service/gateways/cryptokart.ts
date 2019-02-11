@@ -28,14 +28,20 @@ const _lotMultiplier = 1;
 class ws {
     public socket;
     private readonly _authenticationBearer;
+    private readonly _clientId;
+    private readonly _clientSecret;
+    private readonly _socketUrl;
     private readonly config;
 
     constructor(onTrade?) {
         this.config = new Config.ConfigProvider();
 
         this._authenticationBearer = this.config.GetString("AuthorizationBearer");
+        this._clientId = this.config.GetString("TribecaClientId");
+        this._clientSecret = this.config.GetString("TribecaClientSecret");
+        this._socketUrl = this.config.GetString('CryptokartSocketUrl');
 
-        this.socket = new WebSocket("ws://13.127.78.141:8090", {rejectUnauthorized: false});
+        this.socket = new WebSocket(this._socketUrl, {rejectUnauthorized: false});
 
         let onOpen = (event) => {
             console.log('Socket Connected');
@@ -126,8 +132,8 @@ class ws {
                 id: 1001,
                 method: 'server.sign',
                 params: [
-                    this._authenticationBearer,//Some access token
-                    'id',
+                    this._clientId,
+                    this._clientSecret,
                     Math.round(Date.now()/1000)
                 ]
             }));
