@@ -1001,7 +1001,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                      const dealOrderId = +rec['deal_order_id'];
                      
                      // check whether we have already considered the deal for forwarding to Binance..
-                     if(!_.includes(this.orderDealsSentData[orderData[1].id+''], dealOrderId)) {
+                     if(this.orderDealsSentData[orderData[1].id+''] && !_.includes(this.orderDealsSentData[orderData[1].id+''], dealOrderId)) {
 
                         this.orderDealsSentData[orderData[1].id+''].push(dealOrderId);
                         
