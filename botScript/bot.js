@@ -84,7 +84,7 @@ const tradeNow = async () => {
 
     const coinAmt = await RandomAmountDistribution(marketAvgAmount, PROBABILITY_DISTRIBUTION, DELTA_MAX_IN_PERCENT);
 
-    await cryptokartService.placeMarketOrder(coinAmt(), marketSide);
+    await cryptokartService.placeMarketOrder(coinAmt(), marketSide, market);
    
     const nextOrderTimePause = (INTERVAL_BEGIN_TIME + (INTERVAL_END_TIME - INTERVAL_BEGIN_TIME)*Math.random());
     tradingInterval = setTimeout(tradeNow, nextOrderTimePause * 1000);

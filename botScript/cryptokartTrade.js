@@ -11,6 +11,8 @@ async function sendPostRequest(url, requestBody) {
         requestBody['client_id'] = CLIENT_ID;
         requestBody['client_secret'] = CLIENT_SECRET;
 
+        //console.log(requestBody);
+
         request({
             url,
             method: 'POST',
@@ -43,7 +45,10 @@ function checkTopOrderUser(marketSide, market) {
     
         return sendPostRequest(tradingEngineURL, requestBody)
         .then( result => {
-            if (result.error) throw Error(result.error);
+            if (result.error) {
+                //console.log(result);
+                throw Error(result);
+            }
     
             const topOrder = result.result.orders[0];
             if(topOrder) {
@@ -53,7 +58,8 @@ function checkTopOrderUser(marketSide, market) {
             }
         })
         .catch(err => {
-            console.error(`--> ERROR ENCOUNTERED WHILE CHECKING FOR TOP ORDER ON ${marketSide == 1 ? 'SELL' : 'BUY'} SIDE : `, err);
+            console.error(`--> ERROR ENCOUNTERED WHILE CHECKING FOR TOP ORDER ON ${marketSide == 1 ? 'SELL' : 'BUY'} SIDE : `);
+            console.log(err);
             reject('ERROR_CHECKING_TOP_ORDER');
         })
     });
@@ -107,7 +113,7 @@ module.exports = {
             const otherSide = marketSide === 1 ? 2 : 1;
 
             console.log(`\n## INITIATING A MARKET ORDER OF ${coinAmt} COINS ON ${marketSide == 1 ? 'SELL' : 'BUY'} SIDE...`);
-            const topOrderUser = await checkTopOrderUser(otherSide);
+            const topOrderUser = await checkTopOrderUser(otherSide, market);
 
             switch(topOrderUser) {
                 case 'TRIBECA':
@@ -120,7 +126,8 @@ module.exports = {
                         }
                     })
                     .catch((err) => {
-                        console.error(`--> ERROR ENCOUNTERED WHILE PLACING MARKET ORDER OF AMOUNT ${coinAmt} ON ${marketSide == 1 ? 'SELL' : 'BUY'} SIDE : `, err);
+                        console.error(`--> ERROR ENCOUNTERED WHILE PLACING MARKET ORDER OF AMOUNT ${coinAmt} ON ${marketSide == 1 ? 'SELL' : 'BUY'} SIDE : `);
+                        console.error(err);
                         throw "ERROR_PLACING_MARKET_ORDER";
                     })
                     break;
