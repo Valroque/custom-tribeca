@@ -139,6 +139,10 @@ module.exports = {
                 case 'NO_OPEN_ORDERS':
                     console.log(`## NO OPEN ORDERS ON ${otherSide == 1 ? 'SELL' : 'BUY'} SIDE. SKIPPING THE ORDER...`);
                     break;
+                
+                default:
+                    console.log("## ERROR IN CHECKING TOP ORDER : ", topOrderUser);
+                    break;
             }
     
         } catch (e) {
