@@ -4,18 +4,12 @@
 /// <reference path="../interfaces.ts"/>
 
 import Config = require("../config");
-import crypto = require('crypto');
 import request = require('request');
-import url = require("url");
-import querystring = require("querystring");
 import NullGateway = require("./nullgw");
 import Models = require("../../common/models");
 import Utils = require("../utils");
 import Interfaces = require("../interfaces");
 import io = require("socket.io-client");
-import moment = require("moment");
-import util = require("util");
-import * as Q from "q";
 import log from "../logging";
 import WebSocket = require('ws');
 import _ = require('lodash');
@@ -665,6 +659,7 @@ class CryptokartMarketDataGateway implements Interfaces.IMarketDataGateway {
 class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
     public cancelsByClientOrderId = true;
+    private baseCryptokartUrl: string;
     
     supportsCancelAllOpenOrders = () : boolean => { return true; };
 
@@ -679,7 +674,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     cancelOrder = (cancel : Models.OrderStatusReport) => {
 
         console.log("## testing cancel order : ", cancel);
-        Utils.sendPostRequest('https://test.cryptokart.io:1337/matchengine/order/cancel', {
+        Utils.sendPostRequest(this.baseCryptokartUrl + '/matchengine/order/cancel', {
             "market_name" : this._symbolProvider.symbol,
             "order_id" : parseInt(cancel.orderId)
         })
@@ -721,7 +716,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
         if(CryptokartOrderEntryGateway.getType(order.type) === 'limit') {
 
-            url = `https://test.cryptokart.io:1337/matchengine/order/putLimit`;
+            url = this.baseCryptokartUrl + '/matchengine/order/putLimit';
             finalOrderToSend = {
                 "market_name" : this._symbolProvider.symbol,
                 "side" : CryptokartOrderEntryGateway.getSide(order.side),
@@ -730,7 +725,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             }
         } else {
 
-            url = `https://test.cryptokart.io:1337/matchengine/order/putMarket`;            
+            url = this.baseCryptokartUrl + '/matchengine/order/putMarket';            
             finalOrderToSend = {
                 "market_name" : this._symbolProvider.symbol,
                 "side" : CryptokartOrderEntryGateway.getSide(order.side),
@@ -1049,53 +1044,56 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
                                 binanceResponse = await Utils.sendOrderBinance(query,signature);
                                 console.log("\n Binance Response : ",binanceResponse);
 
-                                // demo binance response till the time we don't execute it on PROD Binance
-                                binanceResponse = {
-                                    "symbol": "BTCUSDT",
-                                    "orderId": 28,
-                                    "clientOrderId": "6gCrw2kRUAF9CvJDGP16IP",
-                                    "transactTime": 1507725176595,
-                                    "price": "4000.00000000",
-                                    "origQty": "10.00000000",
-                                    "executedQty": "0.500000000",
-                                    "cummulativeQuoteQty": "10.00000000",
-                                    "status": "FILLED",
-                                    "timeInForce": "GTC",
-                                    "type": "MARKET",
-                                    "side": "SELL",
-                                    "fills": [
-                                    {
+                                if(!process.env.NODE_ENV || (process.env.NODE_ENV && process.env.NODE_ENV === 'development')) {
+                                    console.log("## Dummy Binance Response Set ##\n");
+                                    binanceResponse = {
+                                        "symbol": "BTCUSDT",
+                                        "orderId": 28,
+                                        "clientOrderId": "6gCrw2kRUAF9CvJDGP16IP",
+                                        "transactTime": 1507725176595,
                                         "price": "4000.00000000",
-                                        "qty": "1.00000000",
-                                        "commission": "4.00000000",
-                                        "commissionAsset": "USDT"
-                                    },
-                                    {
-                                        "price": "3999.00000000",
-                                        "qty": "5.00000000",
-                                        "commission": "19.99500000",
-                                        "commissionAsset": "USDT"
-                                    },
-                                    {
-                                        "price": "3998.00000000",
-                                        "qty": "2.00000000",
-                                        "commission": "7.99600000",
-                                        "commissionAsset": "USDT"
-                                    },
-                                    {
-                                        "price": "3997.00000000",
-                                        "qty": "1.00000000",
-                                        "commission": "3.99700000",
-                                        "commissionAsset": "USDT"
-                                    },
-                                    {
-                                        "price": "3995.00000000",
-                                        "qty": "1.00000000",
-                                        "commission": "3.99500000",
-                                        "commissionAsset": "USDT"
+                                        "origQty": "10.00000000",
+                                        "executedQty": "0.500000000",
+                                        "cummulativeQuoteQty": "10.00000000",
+                                        "status": "FILLED",
+                                        "timeInForce": "GTC",
+                                        "type": "MARKET",
+                                        "side": "SELL",
+                                        "fills": [
+                                        {
+                                            "price": "4000.00000000",
+                                            "qty": "1.00000000",
+                                            "commission": "4.00000000",
+                                            "commissionAsset": "USDT"
+                                        },
+                                        {
+                                            "price": "3999.00000000",
+                                            "qty": "5.00000000",
+                                            "commission": "19.99500000",
+                                            "commissionAsset": "USDT"
+                                        },
+                                        {
+                                            "price": "3998.00000000",
+                                            "qty": "2.00000000",
+                                            "commission": "7.99600000",
+                                            "commissionAsset": "USDT"
+                                        },
+                                        {
+                                            "price": "3997.00000000",
+                                            "qty": "1.00000000",
+                                            "commission": "3.99700000",
+                                            "commissionAsset": "USDT"
+                                        },
+                                        {
+                                            "price": "3995.00000000",
+                                            "qty": "1.00000000",
+                                            "commission": "3.99500000",
+                                            "commissionAsset": "USDT"
+                                        }
+                                        ]
                                     }
-                                    ]
                                 }
+                                // demo binance response till the time we don't execute it on PROD Binance
 
                                 /**
                                  * Profit Calculation for Cryptokart
@@ -1182,6 +1180,7 @@ class CryptokartOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         this._secret = config.GetString("HitBtcSecret");
         this._authorizationBearer = config.GetString("AuthorizationBearer");
         this.cryptokartTradeEngineUrl = config.GetString("CryptokartTradeEngine");
+        this.baseCryptokartUrl = config.GetString("CryptokartPullUrl")
 
         // binanceMarketOrders collection contains the response of binance market orders...
         this.mongoBinance = new Utils.MongoSave('binanceMarketOrders');
@@ -1228,7 +1227,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
             // this.getAuth("/matchengine/balance/query"),
             {
                 method: 'POST',
-                url: `https://test.cryptokart.io:1337/matchengine/balance/query`,
+                url: this._pullUrl + '/matchengine/balance/query',
                 headers: {
                     // 'Authorization': 'Bearer ' + this._authorizationBearer,
                     'Content-Type': 'application/json'
@@ -1266,7 +1265,6 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                         }
                         if (currency == null) return;
                         const position = new Models.CurrencyPosition(Number(rpts[r].available), Number(rpts[r].freeze), currency);
-                        console.log("YE TRIGGER HOGA : ",position);
                         this.PositionUpdate.trigger(position);
                     });
                 }

@@ -2,7 +2,9 @@ const request = require('request');
 const CLIENT_ID = '09ad67fa-4d9a-433f-b647-7a68282b8ecc';
 const CLIENT_SECRET = '8a408794-ceef-4cc6-8db2-4c810b2f8de7';
 const TRIBECA_BOT_ID = 49;
-const tradingEngineURL = 'http://13.127.78.141:8080';
+// const tradingEngineURL = 'http://13.127.78.141:8080';
+// const tradingEngineURLprod = 'http://13.127.5.194:8080';
+const tradingEngineURL = process.env.NODE_ENV && (process.env.NODE_ENV === 'production') ? 'http://13.127.5.194:8080' : 'http://13.127.78.141:8080';
 
 async function sendPostRequest(url, requestBody) {
     return new Promise((resolve, reject) => {

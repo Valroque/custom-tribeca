@@ -23,8 +23,8 @@
     "CryptokartTradeEngine": "http://13.127.78.141:8080",
     "CryptokartAccountIDs": [999,888],
 
-    "TribecaClientId" : "6c9590cb-ec13-4548-9bad-b591b344ddb3",
-    "TribecaClientSecret" : "9de06b78-a841-43e3-869f-9c501bc3036d",
+    "TribecaClientId" : "b61ea632-c740-47da-90a7-041c24d69f18",
+    "TribecaClientSecret" : "0e98663e-36a4-458a-bb8e-4c2618345c7b",
 
     "BinanceSocketResetHours": "0.1",
 
