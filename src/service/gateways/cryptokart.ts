@@ -1220,6 +1220,8 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
 
     private readonly _log = log("tribeca:gateway:cryptokart");
     PositionUpdate = new Utils.Evt<Models.CurrencyPosition>();
+    private readonly _tribecaClientId;
+    private readonly _tribecaClientSecret;
 
     private onTick = () => {
         request(
@@ -1228,13 +1230,18 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                 method: 'POST',
                 url: `https://test.cryptokart.io:1337/matchengine/balance/query`,
                 headers: {
-                    'Authorization': 'Bearer ' + this._authorizationBearer,
+                    // 'Authorization': 'Bearer ' + this._authorizationBearer,
                     'Content-Type': 'application/json'
+                },
+                json: {
+                    client_id: this._tribecaClientId,
+                    client_secret: this._tribecaClientSecret
                 }
             },
             (err, body, resp) => {
+                console.log("DHYAN SE DEKHO : ",resp);
                 try {
-                    let rpts = JSON.parse(resp);
+                    let rpts = (resp);
                     
                     if (typeof rpts === 'undefined' || err || rpts.error) {
                         this._log.warn(err, "Trouble getting positions", body.body);
@@ -1259,6 +1266,7 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
                         }
                         if (currency == null) return;
                         const position = new Models.CurrencyPosition(Number(rpts[r].available), Number(rpts[r].freeze), currency);
+                        console.log("YE TRIGGER HOGA : ",position);
                         this.PositionUpdate.trigger(position);
                     });
                 }
@@ -1307,6 +1315,8 @@ class HitBtcPositionGateway implements Interfaces.IPositionGateway {
         this._apiKey = config.GetString("CryptokartApiKey");
         this._secret = config.GetString("CryptokartSecret");
         this._pullUrl = config.GetString("CryptokartPullUrl");
+        this._tribecaClientId = config.GetString("TribecaClientId");
+        this._tribecaClientSecret = config.GetString("TribecaClientSecret");
         this._authorizationBearer = config.GetString("AuthorizationBearer");
         [this.baseSymbol,this.quoteSymbol] = config.GetString("TradedPair").split("/");
 

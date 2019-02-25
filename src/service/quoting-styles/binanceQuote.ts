@@ -11,6 +11,9 @@ export class BinanceQuote implements StyleHelpers.QuoteStyle {
         const width = input.params.width;
         const size = input.params.size;
 
+        if(!input.market.bids.length || !input.market.asks.length) {
+            return null;
+        }
         const bidPx = Math.max(input.market.bids[0].price - width);
         const askPx = input.market.asks[0].price + width;
 
