@@ -73,7 +73,13 @@ const tradeNow = async () => {
     const marketSide = getRandomMarketSide();
     // INITIALIZE THE RANDOM COIN AMOUNT GENERATOR BASED ON THE PROBABILITY DISTRIBUTION
     // future addition - provide a delta to be added/subtracted from the random coin amt being generated..
-    const marketLTP = await cryptokartService.getMarketLTP(market);
+    let marketLTP;
+    try {
+        marketLTP = await cryptokartService.getMarketLTP(market);
+    } catch (e) {
+        console.log("\n## ERROR in Fetching Market Last Price : ",e);
+        return;
+    }
     const marketAvgAmount = AMT_AVG/marketLTP;
 
     const coinAmt = await RandomAmountDistribution(marketAvgAmount, PROBABILITY_DISTRIBUTION, DELTA_MAX_IN_PERCENT);
