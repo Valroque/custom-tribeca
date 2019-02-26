@@ -117,7 +117,7 @@ module.exports = {
 
             switch(topOrderUser) {
                 case 'TRIBECA':
-                    sendPostRequest(MARKET_ORDER_URL, requestBody)
+                    sendPostRequest(tradingEngineURL, requestBody)
                     .then((result) => {
                         if(result.error) {
                             Promise.reject(result.error.message);
