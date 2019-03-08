@@ -1,7 +1,7 @@
 const request = require('request');
-const CLIENT_ID = '09ad67fa-4d9a-433f-b647-7a68282b8ecc';
-const CLIENT_SECRET = '8a408794-ceef-4cc6-8db2-4c810b2f8de7';
-const TRIBECA_BOT_ID = 49;
+const CLIENT_ID = process.env.NODE_ENV === 'production' ? 'd48faf86-bc4e-4e0b-b3b6-3b37f03e3c7e' : 'ed1d9e30-1d49-4e82-bb40-740b52bc2786';
+const CLIENT_SECRET = process.env.NODE_ENV === 'production' ? '3c5f0143-a48c-4f3f-80c0-17908ee3f258' : 'aed3e712-af2f-4d60-8011-5d4c08cedfb6';
+const TRIBECA_BOT_ID = 56;
 // const tradingEngineURL = 'http://13.127.78.141:8080';
 // const tradingEngineURLprod = 'http://13.127.5.194:8080';
 const tradingEngineURL = process.env.NODE_ENV && (process.env.NODE_ENV === 'production') ? 'http://13.127.5.194:8080' : 'http://13.127.78.141:8080';
@@ -25,6 +25,21 @@ async function sendPostRequest(url, requestBody) {
                 reject(err);
             } else {
                 resolve(resp);
+            }
+        })
+    })
+}
+
+function getJSON(url) {
+    return new Promise((resolve, reject) => {
+        request({
+            url,
+            method: 'GET'
+        }, (err, body, resp) => {
+            if(err) {
+                reject(err);
+            } else {
+                resolve(JSON.parse(resp));
             }
         })
     })
@@ -69,19 +84,9 @@ function checkTopOrderUser(marketSide, market) {
 module.exports = {
     getMarketLTP: market => {
         return new Promise((resolve, reject) => {
-            const requestBody = {
-                id: 1,
-                method: 'market.last',
-                params: [
-                    market
-                ]
-            }
-
-            return sendPostRequest(tradingEngineURL, requestBody)
+            return getJSON('https://api.binance.com/api/v3/ticker/price?symbol=' + market)
                 .then(data => {
-                    if (data.error) throw Error(data.error);
-
-                    resolve(Number(data.result));
+                    resolve(Number(data.price));
                 })
                 .catch(err => {
                     reject(err);
@@ -95,7 +100,7 @@ module.exports = {
                 "id": 1,
                 "method":"order.put_market",
                 "params":[
-                    1,
+                    57,
                     market,
                     marketSide,
                     coinAmt.toString(), 

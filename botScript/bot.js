@@ -1,9 +1,9 @@
 const RandomAmountDistribution = require('./randomAmount')
 const cryptokartService = require('./cryptokartTrade');
 
-const AMT_AVG = 100;
+const AMT_AVG = 50;
 const DELTA_MAX_IN_PERCENT = 50; // to make sure the values are continuous and not discrete...
-const market = process.argv[2];
+const market = 'BTCUSDT';
 const INTERVAL_BEGIN_TIME = 800; // in seconds...
 const INTERVAL_END_TIME = 928; // therefore, avg mins = 14.4, i.e 864seconds
 

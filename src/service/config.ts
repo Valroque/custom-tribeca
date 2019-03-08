@@ -22,7 +22,7 @@ export class ConfigProvider implements IConfigProvider {
     constructor() {
         this.inBacktestMode = (process.env["TRIBECA_BACKTEST_MODE"] || "false") === "true";
         
-        const configFile = process.env["TRIBECA_CONFIG_FILE"] || "tribeca.json";
+        const configFile = process.env["TRIBECA_CONFIG_FILE"] || process.env.NODE_ENV === 'production' ? "tribeca_prod.json" : "tribeca_dev.json";
         if (fs.existsSync(configFile)) {
             this._config = JSON.parse(fs.readFileSync(configFile, "utf-8"));
         }

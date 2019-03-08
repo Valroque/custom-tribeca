@@ -13,18 +13,18 @@
     "BINANCE_SECRET_KEY": "PbDQnxKkR5fFb3ZWHsZIUI4XhwM9RqTCyOqsTB08lGRnYmCSsp13RD8pz0k3uvrP",
 
     "CryptokartPullUrl": "https://cryptokart.io:1337",
-    "CryptokartOrderEntryUrl": "wss://13.127.5.194:8090",
-    "CryptokartMarketDataUrl": "wss://13.127.5.194:8090",
-    "CryptokartSocketUrl": "wss://13.127.5.194:8090",
+    "CryptokartOrderEntryUrl": "wss://13.127.5.194:453",
+    "CryptokartMarketDataUrl": "wss://13.127.5.194:453",
+    "CryptokartSocketUrl": "wss://13.127.5.194:453",
     "CryptokartSocketIoUrl": "https://api.hitbtc.com:8081",
     "CryptokartApiKey": "7AC8OHL3XD",
     "CryptokartSecret": "IUHIAxsBDQXomnFnOSaymoQlLwOKk0",
     "CryptokartOrderDestination": "Cryptokart",
     "CryptokartTradeEngine": "http://13.127.5.194:8080",
-    "CryptokartAccountIDs": [999,888],
+    "CryptokartAccountIDs": [57],
 
-    "TribecaClientId" : "6c9590cb-ec13-4548-9bad-b591b344ddb3",
-    "TribecaClientSecret" : "9de06b78-a841-43e3-869f-9c501bc3036d",
+    "TribecaClientId" : "4bd3f0e0-db42-442b-bb09-075e72f80a88",
+    "TribecaClientSecret" : "a3020377-2955-41c3-b0f5-b17bc02ca05a",
 
     "BinanceSocketResetHours": "0.1",
 
